@@ -1,6 +1,8 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using System.Net.Mail;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -16,15 +18,15 @@ namespace Vaquita.Servicios
         private readonly ApplicationDbContext context;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
-        private readonly IEmailService emailService;
+        private readonly ILogger<UsuarioService> logger;
 
         public UsuarioService(ApplicationDbContext context, IConfiguration configuration,
-            IMapper mapper, IEmailService emailService)
+            IMapper mapper, ILogger<UsuarioService> logger)
         {
             this.context = context;
             this.configuration = configuration;
             this.mapper = mapper;
-            this.emailService = emailService;
+            this.logger = logger;
         }
 
         // Alta: guarda el usuario y envía un mail con el link de verificación
@@ -112,6 +114,35 @@ namespace Vaquita.Servicios
             return new RespuestaAutenticacionDTO { Token = token, Expiracion = expiracion };
         }
 
+        public async Task EnviarCorreo(string destino, string asunto, string cuerpoHtml)
+        {
+            var host = configuration["Smtp:Host"];
+
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                logger.LogInformation("[EMAIL SIMULADO] Para: {Destino} | Asunto: {Asunto} | Cuerpo: {Cuerpo}",
+                    destino, asunto, cuerpoHtml);
+                return;
+            }
+
+            var puerto = configuration.GetValue("Smtp:Port", 587);
+            var desde = configuration["Smtp:Desde"]!;
+
+            using var cliente = new SmtpClient(host, puerto)
+            {
+                EnableSsl = true,
+                Credentials = new NetworkCredential(
+                    configuration["Smtp:Usuario"], configuration["Smtp:Password"])
+            };
+
+            using var mensaje = new MailMessage(desde, destino, asunto, cuerpoHtml)
+            {
+                IsBodyHtml = true
+            };
+
+            await cliente.SendMailAsync(mensaje);
+        }
+
         private async Task EnviarLink(Usuario usuario, TipoToken tipo)
         {
             var tokenVerificacion = new TokenVerificacion
@@ -135,7 +166,7 @@ namespace Vaquita.Servicios
                          $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
                          "<p>El enlace vence en 24 horas.</p>";
 
-            await emailService.Enviar(usuario.Email, asunto, cuerpo);
+            await EnviarCorreo(usuario.Email, asunto, cuerpo);
         }
     }
 }

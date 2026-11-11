@@ -10,6 +10,8 @@ using Vaquita.Middlewares;
 using Vaquita.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
+Console.WriteLine($"Entorno: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"JwtKey cargada: {builder.Configuration["JwtKey"] != null}");
 
 // Add services to the container.
 
@@ -55,7 +57,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
 
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRubroService, RubroService>();
 builder.Services.AddScoped<ISaldoService, SaldoService>();

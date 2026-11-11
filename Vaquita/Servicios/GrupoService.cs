@@ -14,16 +14,16 @@ namespace Vaquita.Servicios
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
         private readonly IConfiguration configuration;
-        private readonly IEmailService emailService;
+        private readonly IUsuarioService usuarioService;
         private readonly ISaldoService saldoService;
 
         public GrupoService(ApplicationDbContext context, IMapper mapper,
-            IConfiguration configuration, IEmailService emailService, ISaldoService saldoService)
+            IConfiguration configuration, IUsuarioService usuarioService, ISaldoService saldoService)
         {
             this.context = context;
             this.mapper = mapper;
             this.configuration = configuration;
-            this.emailService = emailService;
+            this.usuarioService = usuarioService;
             this.saldoService = saldoService;
         }
 
@@ -212,7 +212,7 @@ namespace Vaquita.Servicios
                          $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
                          "<p>Tenés que estar registrado en la app para unirte.</p>";
 
-            await emailService.Enviar(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
+            await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
         }
 
         // QR con la URL que redirige al "punto de unión" de la app
