@@ -10,9 +10,10 @@ using Vaquita.Middlewares;
 using Vaquita.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
-Console.WriteLine($"Entorno: {builder.Environment.EnvironmentName}");
-Console.WriteLine($"JwtKey cargada: {builder.Configuration["JwtKey"] != null}");
 
+var jwtKey = builder.Configuration["JwtKey"]
+    ?? throw new InvalidOperationException(
+        "Falta la configuración 'JwtKey'. Definila con user-secrets o variable de entorno.");
 // Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(opciones =>
@@ -72,7 +73,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JwtKey"]!))
+            Encoding.UTF8.GetBytes(jwtKey))
     });
 
 var app = builder.Build();
