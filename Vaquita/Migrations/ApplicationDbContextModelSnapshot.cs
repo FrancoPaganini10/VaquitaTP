@@ -84,6 +84,11 @@ namespace Vaquita.Migrations
                     b.Property<int>("AdministradorId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CodigoInvitacion")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -98,6 +103,9 @@ namespace Vaquita.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdministradorId");
+
+                    b.HasIndex("CodigoInvitacion")
+                        .IsUnique();
 
                     b.ToTable("Grupos");
                 });

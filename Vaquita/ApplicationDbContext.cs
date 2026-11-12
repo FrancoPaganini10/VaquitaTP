@@ -14,6 +14,10 @@ namespace Vaquita
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            modelBuilder.Entity<Grupo>()
+        .HasIndex(g => g.CodigoInvitacion)
+        .IsUnique();
         }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

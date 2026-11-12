@@ -35,6 +35,7 @@ namespace Vaquita.Servicios
             grupo.AdministradorId = usuarioId;
             grupo.Activo = true;
             grupo.FechaCreacion = ahora;
+            grupo.CodigoInvitacion = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();  
 
             grupo.Integrantes.Add(new Integrante
             {
@@ -113,63 +114,65 @@ namespace Vaquita.Servicios
         }
 
         // Punto de entrada común del QR y del link del mail de invitación
-        public async Task Unirse(int grupoId, int usuarioId, string? tokenInvitacion)
+        public async Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion){
+    Grupo? grupo;
+    Invitacion? invitacion = null;
+
+    if (!string.IsNullOrWhiteSpace(tokenInvitacion))
+    {
+        // Camino invitación por mail
+        invitacion = await context.Invitaciones
+            .Include(i => i.Grupo)
+            .FirstOrDefaultAsync(i => i.Token == tokenInvitacion
+                && i.Estado == EstadoInvitacion.Pendiente
+                && i.FechaVencimiento > DateTime.UtcNow);
+
+        if (invitacion is null)
+            throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
+
+        var emailUsuario = await context.Usuarios
+            .Where(u => u.Id == usuarioId).Select(u => u.Email).FirstAsync();
+
+        if (!string.Equals(invitacion.Email, emailUsuario, StringComparison.OrdinalIgnoreCase))
+            throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
+
+        grupo = invitacion.Grupo;
+    }
+    else if (!string.IsNullOrWhiteSpace(codigo))
+    {
+        // Camino QR
+        grupo = await context.Grupos.FirstOrDefaultAsync(g => g.CodigoInvitacion == codigo);
+    }
+    else
+    {
+        throw new ReglaDeNegocioException("El código no es válido.");
+    }
+
+    if (grupo is null || !grupo.Activo)
+        throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
+
+    if (invitacion is not null)
+        invitacion.Estado = EstadoInvitacion.Aceptada;
+
+    var yaEsIntegrante = await context.Integrantes
+        .AnyAsync(i => i.GrupoId == grupo.Id && i.UsuarioId == usuarioId);
+
+    if (!yaEsIntegrante)
+    {
+        var ahora = DateTime.UtcNow;
+        context.Add(new Integrante
         {
-            var grupo = await context.Grupos.FirstOrDefaultAsync(g => g.Id == grupoId);
+            GrupoId = grupo.Id,
+            UsuarioId = usuarioId,
+            EsAdministrador = false,
+            FechaIngreso = ahora,
+            UltimoAcceso = ahora
+        });
+    }
 
-            if (grupo is null)
-            {
-                throw new NoEncontradoException("El grupo no existe.");
-            }
+    await context.SaveChangesAsync();
+}
 
-            if (!grupo.Activo)
-            {
-                throw new ReglaDeNegocioException("El grupo está cerrado.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(tokenInvitacion))
-            {
-                var invitacion = await context.Invitaciones.FirstOrDefaultAsync(i =>
-                    i.Token == tokenInvitacion && i.GrupoId == grupoId
-                    && i.Estado == EstadoInvitacion.Pendiente
-                    && i.FechaVencimiento > DateTime.UtcNow);
-
-                if (invitacion is null)
-                {
-                    throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
-                }
-
-                var emailUsuario = await context.Usuarios
-                    .Where(u => u.Id == usuarioId).Select(u => u.Email).FirstAsync();
-
-                if (!string.Equals(invitacion.Email, emailUsuario, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new ReglaDeNegocioException(
-                        "La invitación fue enviada a otro email.");
-                }
-
-                invitacion.Estado = EstadoInvitacion.Aceptada;
-            }
-
-            var yaEsIntegrante = await context.Integrantes
-                .AnyAsync(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId);
-
-            if (!yaEsIntegrante)
-            {
-                var ahora = DateTime.UtcNow;
-
-                context.Add(new Integrante
-                {
-                    GrupoId = grupoId,
-                    UsuarioId = usuarioId,
-                    EsAdministrador = false,
-                    FechaIngreso = ahora,
-                    UltimoAcceso = ahora
-                });
-            }
-
-            await context.SaveChangesAsync();
-        }
 
         // Invitación por mail (solo el administrador del grupo)
         public async Task Invitar(int grupoId, int usuarioId, InvitacionCreacionDTO invitacionCreacion)
@@ -216,9 +219,9 @@ namespace Vaquita.Servicios
         }
 
         // QR con la URL que redirige al "punto de unión" de la app
-        private byte[] GenerarQr(int grupoId)
+        private byte[] GenerarQr(string codigo)
         {
-            var url = $"{configuration["FrontendUrl"]}/unirse/{grupoId}";
+             var url = $"{configuration["FrontendUrl"]}/unirse?codigo={codigo}";
 
             using var generador = new QRCodeGenerator();
             using var datos = generador.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
@@ -228,8 +231,8 @@ namespace Vaquita.Servicios
 
         public async Task<byte[]> ObtenerQr(int grupoId, int usuarioId)
         {
-            await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
-            return GenerarQr(grupoId);
+            var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+            return GenerarQr(grupo.CodigoInvitacion);
         }
 
         // Cerrar grupo: todos los saldos deben estar en cero

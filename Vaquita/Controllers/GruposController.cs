@@ -61,10 +61,10 @@ namespace Vaquita.Controllers
         /// </summary>
         /// <param name="id">Id del grupo (viene en el QR / link).</param>
         /// <param name="token">Token de la invitación (solo si viene del mail).</param>
-        [HttpPost("{id:int}/unirse")]
-        public async Task<ActionResult> Unirse(int id, [FromQuery] string? token)
+        [HttpPost("unirse")]
+        public async Task<ActionResult> Unirse([FromBody] UnirseGrupoDTO dto)
         {
-            await servicio.Unirse(id, User.ObtenerUsuarioId(), token);
+            await servicio.Unirse(User.ObtenerUsuarioId(), dto.Codigo, dto.TokenInvitacion);
             return Ok();
         }
 

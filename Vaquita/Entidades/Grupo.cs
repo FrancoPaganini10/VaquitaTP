@@ -7,6 +7,7 @@ namespace Vaquita.Entidades
         public bool Activo { get; set; } = true;
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaCierre { get; set; }
+        public string CodigoInvitacion { get; set; } = null!;
 
         public int AdministradorId { get; set; }
         public Usuario Administrador { get; set; } = null!;
