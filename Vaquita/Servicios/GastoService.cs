@@ -82,7 +82,7 @@ namespace Vaquita.Servicios
             gasto.GrupoId = grupoId;
             gasto.PagadorId = pagadorId;
             gasto.RegistradoPorId = usuarioId;
-            gasto.Fecha = DateTime.Now;
+            gasto.Fecha = Reloj.Hoy();
 
             context.Add(gasto);
             await context.SaveChangesAsync();
