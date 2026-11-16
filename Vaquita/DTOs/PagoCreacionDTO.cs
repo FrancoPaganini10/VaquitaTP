@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Vaquita.Utilidades;
 
 namespace Vaquita.DTOs
 {
@@ -10,7 +11,7 @@ namespace Vaquita.DTOs
         // Quien recibe
         public int AcreedorId { get; set; }
 
-        [Range(0.01, 999999999.99)]
+        [Range(0.01, 999999999.99), MaximoDosDecimales]
         public decimal Importe { get; set; }
     }
 }
