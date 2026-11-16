@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using Vaquita.Utilidades;
 
 namespace Vaquita.DTOs
 {
     public class GastoCreacionDTO
     {
-        [Range(0.01, 999999999.99)]
+        [Range(0.01, 999999999.99), MaximoDosDecimales]
         public decimal Importe { get; set; }
 
         [Required, StringLength(200)]
