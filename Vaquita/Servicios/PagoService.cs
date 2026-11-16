@@ -60,6 +60,9 @@ namespace Vaquita.Servicios
                 throw new ReglaDeNegocioException("Ambos deben ser integrantes del grupo.");
             }
 
+            await using var transaccion = await context.Database.BeginTransactionAsync();          
+            await context.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM dbo.Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
+
             // No se puede pagar más que lo adeudado según el Cuadro 2
             var resumen = await saldoService.Calcular(grupoId);
 
@@ -88,6 +91,7 @@ namespace Vaquita.Servicios
 
             context.Add(pago);
             await context.SaveChangesAsync();
+            await transaccion.CommitAsync();          
 
             return pago.Id;
         }
