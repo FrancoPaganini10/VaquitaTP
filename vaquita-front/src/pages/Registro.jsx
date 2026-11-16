@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usuariosApi } from "../api/endpoints.js";
+import AvisoDev from "../components/AvisoDev.jsx";
 import Field from "../components/Field.jsx";
 import { FormError } from "../components/Estado.jsx";
 import { useForm } from "../hooks/useForm.js";
@@ -25,11 +26,7 @@ export default function Registro() {
           Te mandamos un enlace a <strong>{enviadoA}</strong>. Al abrirlo desde este dispositivo ingresás a Vaquita y
           te queda la sesión iniciada.
         </p>
-        {import.meta.env.DEV && (
-          <p className="hint">
-            Modo desarrollo: sin SMTP configurado, el enlace aparece en la consola del backend.
-          </p>
-        )}
+        <AvisoDev />
       </AuthShell>
     );
   }

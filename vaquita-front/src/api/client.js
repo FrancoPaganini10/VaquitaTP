@@ -67,7 +67,14 @@ export async function request(path, { method = "GET", body, query, blob = false 
     if (token) alVencerSesion();
     throw new ApiError(401, "Tu sesión venció. Volvé a ingresar.");
   }
-  if (!res.ok) throw await construirError(res);
+  if (!res.ok) {
+    const error = await construirError(res);
+    // Con el back caído, el proxy de Vite responde 500/502/503/504 sin cuerpo JSON de la API
+    if ([500, 502, 503, 504].includes(res.status) && error.message === `Error ${res.status}`) {
+      throw new ApiError(0, "No se pudo conectar con el servidor. Revisá que el back esté levantado.");
+    }
+    throw error;
+  }
   if (res.status === 204) return null;
   if (blob) return res.blob();
 

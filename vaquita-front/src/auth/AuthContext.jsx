@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { TOKEN_KEY, onSesionVencida } from "../api/client.js";
-import { parseJwt } from "../lib/format.js";
+import { parseJwt } from "./jwt.js";
 
 export const REDIRECT_KEY = "vaquita.redirect";
 

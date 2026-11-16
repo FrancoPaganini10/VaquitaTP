@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { usuariosApi } from "../api/endpoints.js";
 import { REDIRECT_KEY, useAuth } from "../auth/AuthContext.jsx";
+import { Cargando, FormError } from "../components/Estado.jsx";
 import AuthShell from "./AuthShell.jsx";
 
 // Destino del link del mail (alta y login): /verificar?token=...
@@ -32,9 +33,7 @@ export default function Verificar() {
   if (error) {
     return (
       <AuthShell titulo="No pudimos verificar el enlace">
-        <p className="banner banner-error" role="alert">
-          {error}
-        </p>
+        <FormError mensaje={error} />
         <Link className="btn" to="/login">
           Pedir un enlace nuevo
         </Link>
@@ -44,9 +43,7 @@ export default function Verificar() {
 
   return (
     <AuthShell titulo="Verificando tu enlace…">
-      <p role="status" className="cargando">
-        Un momento, te estamos ingresando.
-      </p>
+      <Cargando>Un momento, te estamos ingresando.</Cargando>
     </AuthShell>
   );
 }

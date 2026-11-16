@@ -11,8 +11,16 @@ export const gruposApi = {
   ultimo: () => request("/grupos/ultimo"), // null si no tiene grupos (204)
   obtener: (id) => request(`/grupos/${id}`),
   crear: (dto) => request("/grupos", { method: "POST", body: dto }),
-  unirse: (id, token) =>
-    request(`/grupos/${id}/unirse`, { method: "POST", query: token ? { token } : undefined }),
+  
+  unirse: (codigo, token) =>
+  request("/grupos/unirse", {
+    method: "POST",
+    body: {
+      codigo: codigo || null,
+      tokenInvitacion: token || null
+    }
+  }),
+
   invitar: (id, email) => request(`/grupos/${id}/invitaciones`, { method: "POST", body: { email } }),
   qr: (id) => request(`/grupos/${id}/qr`, { blob: true }),
   cerrar: (id) => request(`/grupos/${id}/cerrar`, { method: "POST" }),

@@ -4,7 +4,7 @@ import { useForm } from "../hooks/useForm.js";
 import { invitacionSchema } from "../lib/schemas.js";
 import Field from "./Field.jsx";
 import Modal from "./Modal.jsx";
-import { FormError } from "./Estado.jsx";
+import { Cargando, FormError } from "./Estado.jsx";
 
 // El QR requiere Authorization, así que no puede ir en un <img src>: lo bajamos como blob.
 function Qr({ grupoId }) {
@@ -28,8 +28,8 @@ function Qr({ grupoId }) {
     };
   }, [grupoId]);
 
-  if (fallo) return <p className="banner banner-error">No se pudo generar el código QR.</p>;
-  if (!src) return <p role="status" className="cargando">Generando QR…</p>;
+  if (fallo) return <FormError mensaje="No se pudo generar el código QR." />;
+  if (!src) return <Cargando>Generando QR…</Cargando>;
   return <img className="qr" src={src} alt="Código QR para unirse al grupo" width="220" height="220" />;
 }
 
