@@ -65,6 +65,19 @@ builder.Services.AddScoped<IGrupoService, GrupoService>();
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IPagoService, PagoService>();
 
+var origenesPermitidos = builder.Configuration.GetSection("Cors:Origenes").Get<string[]>()
+    ?? new[] { "https://localhost:4200" };
+
+builder.Services.AddCors(opciones =>
+{
+    opciones.AddDefaultPolicy(politica =>
+    {
+        politica.WithOrigins(origenesPermitidos)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opciones => opciones.TokenValidationParameters = new TokenValidationParameters
     {
@@ -86,7 +99,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors();     
 app.UseMiddleware<ManejadorErroresMiddleware>();
 
 app.UseAuthentication();
