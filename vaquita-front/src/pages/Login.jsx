@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usuariosApi } from "../api/endpoints.js";
+import AvisoDev from "../components/AvisoDev.jsx";
 import Field from "../components/Field.jsx";
 import { FormError } from "../components/Estado.jsx";
 import { useForm } from "../hooks/useForm.js";
@@ -25,11 +26,7 @@ export default function Login() {
           Si <strong>{enviadoA}</strong> está registrado, te mandamos un enlace para ingresar. Abrilo desde este
           dispositivo y vas a quedar con la sesión iniciada.
         </p>
-        {import.meta.env.DEV && (
-          <p className="hint">
-            Modo desarrollo: sin SMTP configurado, el enlace aparece en la consola del backend.
-          </p>
-        )}
+        <AvisoDev />
         <button type="button" className="btn btn-ghost" onClick={() => setEnviadoA("")}>
           Usar otro email
         </button>

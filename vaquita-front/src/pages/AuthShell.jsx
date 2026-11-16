@@ -4,7 +4,7 @@ export default function AuthShell({ titulo, children }) {
     <main className="auth-wrap">
       <section className="glass auth-card">
         <p className="logo logo-grande">
-          <span aria-hidden="true">🐮</span> Vaquita
+          Vaquita
         </p>
         <h1>{titulo}</h1>
         {children}

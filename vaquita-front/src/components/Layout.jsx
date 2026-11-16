@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Outlet, useMatch, useNavigate } from "react-router-dom";
 import { gruposApi } from "../api/endpoints.js";
 import { useAuth } from "../auth/AuthContext.jsx";
@@ -7,6 +8,7 @@ import { useFetch } from "../hooks/useFetch.js";
 export default function Layout() {
   const { sesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const match = useMatch("/grupos/:grupoId/*");
   const idEnUrl = match?.params.grupoId;
   const grupoActualId = /^\d+$/.test(idEnUrl ?? "") ? idEnUrl : "";
@@ -17,15 +19,33 @@ export default function Layout() {
   return (
     <>
       <header className="topbar glass">
-        <Link to="/" className="logo">
-          <span aria-hidden="true">🐮</span> Vaquita
+        <Link to="/" className="logo" onClick={() => setMenuAbierto(false)}>
+          Vaquita
         </Link>
+
+        <button
+          type="button"
+          className="menu-movil"
+          aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={menuAbierto}
+          aria-controls="navegacion-principal"
+          onClick={() => setMenuAbierto((abierto) => !abierto)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
 
         <label className="switcher">
           <span className="sr-only">Grupo actual</span>
           <select
             value={grupoActualId}
-            onChange={(e) => e.target.value && navigate(`/grupos/${e.target.value}/gastos`)}
+            onChange={(e) => {
+              if (e.target.value) {
+                navigate(`/grupos/${e.target.value}/gastos`);
+                setMenuAbierto(false);
+              }
+            }}
           >
             {!grupoActualId && (
               <option value="" disabled>
@@ -43,14 +63,25 @@ export default function Layout() {
           </select>
         </label>
 
-        <div className="topbar-acciones">
-          <Link className="btn btn-green" to="/grupos/nuevo">
+        <div
+          className={`topbar-acciones${menuAbierto ? " menu-abierto" : ""}`}
+          id="navegacion-principal"
+        >
+          <Link
+            className="btn btn-green"
+            to="/grupos/nuevo"
+            onClick={() => setMenuAbierto(false)}
+          >
             Nuevo grupo
           </Link>
           <span className="quien" title={sesion.email}>
             {sesion.email}
           </span>
-          <button type="button" className="btn btn-ghost" onClick={cerrarSesion}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={cerrarSesion}
+          >
             Salir
           </button>
         </div>

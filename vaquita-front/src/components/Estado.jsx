@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 
-export const Cargando = () => (
+export const Cargando = ({ children = "Cargando…" }) => (
   <p role="status" className="cargando">
-    Cargando…
+    {children}
   </p>
 );
 
