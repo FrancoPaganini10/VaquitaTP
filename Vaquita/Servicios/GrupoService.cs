@@ -236,26 +236,31 @@ namespace Vaquita.Servicios
         }
 
         // Cerrar grupo: todos los saldos deben estar en cero
-        public async Task Cerrar(int grupoId, int usuarioId)
-        {
-            var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+public async Task Cerrar(int grupoId, int usuarioId)
+{
+    var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
 
-            if (grupo.AdministradorId != usuarioId)
-            {
-                throw new AccesoDenegadoException("Solo el administrador puede cerrar el grupo.");
-            }
+    if (grupo.AdministradorId != usuarioId)
+    {
+        throw new AccesoDenegadoException("Solo el administrador puede cerrar el grupo.");
+    }
 
-            var resumen = await saldoService.Calcular(grupoId);
+    await using var transaccion = await context.Database.BeginTransactionAsync();           // <-- nueva
+    await context.Database.ExecuteSqlInterpolatedAsync(                                      // <-- nueva
+        $"SELECT Id FROM dbo.Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
 
-            if (!resumen.Saldado)
-            {
-                throw new ReglaDeNegocioException(
-                    "Para cerrar el grupo todos los saldos deben estar en cero.");
-            }
+    var resumen = await saldoService.Calcular(grupoId);
 
-            grupo.Activo = false;
-            grupo.FechaCierre = DateTime.UtcNow;
-            await context.SaveChangesAsync();
-        }
+    if (!resumen.Saldado)
+    {
+        throw new ReglaDeNegocioException(
+            "Para cerrar el grupo todos los saldos deben estar en cero.");
+    }
+
+    grupo.Activo = false;
+    grupo.FechaCierre = DateTime.UtcNow;
+    await context.SaveChangesAsync();
+    await transaccion.CommitAsync();                                                         // <-- nueva
+}
     }
 }
