@@ -86,7 +86,7 @@ namespace Vaquita.Servicios
                 DeudorId = pagoCreacion.DeudorId,
                 AcreedorId = pagoCreacion.AcreedorId,
                 Importe = pagoCreacion.Importe,
-                Fecha = Reloj.Hoy();
+                Fecha = Reloj.Hoy(),
             };
 
             context.Add(pago);

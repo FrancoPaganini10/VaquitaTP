@@ -57,10 +57,9 @@ namespace Vaquita.Controllers
         }
 
         /// <summary>
-        /// Incorpora al usuario logueado al grupo. Es el destino del QR y del link de la invitación por mail.
-        /// </summary>
-        /// <param name="id">Id del grupo (viene en el QR / link).</param>
-        /// <param name="token">Token de la invitación (solo si viene del mail).</param>
+       /// Incorpora al usuario logueado al grupo. Es el destino del QR (código) y del link de la invitación por mail (token).
+       /// </summary>
+      /// <param name="dto">Código del grupo (viene en el QR) o token de la invitación (viene del mail).</param>
         [HttpPost("unirse")]
         public async Task<ActionResult> Unirse([FromBody] UnirseGrupoDTO dto)
         {
