@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
+using System.Net;
 using System.Security.Cryptography;
 using Vaquita.DTOs;
 using Vaquita.Entidades;
@@ -210,8 +211,7 @@ namespace Vaquita.Servicios
             // Mismo destino que el QR: /unirse/{grupoId} (con el token de la invitación)
             var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={invitacion.Token}";
 
-            var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{grupo.Descripcion}</b> en Vaquita.</p>" +
-                         $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
+var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +                         $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
                          "<p>Tenés que estar registrado en la app para unirte.</p>";
 
             await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);

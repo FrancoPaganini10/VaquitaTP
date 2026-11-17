@@ -42,7 +42,7 @@ namespace Vaquita.Controllers
         public async Task<ActionResult> Post(int grupoId, GastoCreacionDTO gastoCreacion)
         {
             var id = await servicio.Crear(grupoId, User.ObtenerUsuarioId(), gastoCreacion);
-            return Ok(new { id });
+           return StatusCode(StatusCodes.Status201Created, new { id });
         }
 
         /// <summary>

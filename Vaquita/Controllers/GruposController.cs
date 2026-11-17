@@ -43,7 +43,7 @@ namespace Vaquita.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<GrupoDTO>> Get(int id) =>
+public async Task<ActionResult<GrupoDTO>> GetPorId(int id) =>
             await servicio.ObtenerPorId(id, User.ObtenerUsuarioId());
 
         /// <summary>
@@ -53,8 +53,7 @@ namespace Vaquita.Controllers
         public async Task<ActionResult<GrupoDTO>> Post(GrupoCreacionDTO grupoCreacion)
         {
             var grupo = await servicio.Crear(User.ObtenerUsuarioId(), grupoCreacion);
-            return CreatedAtAction(nameof(Get), new { id = grupo.Id }, grupo);
-        }
+return CreatedAtAction(nameof(GetPorId), new { id = grupo.Id }, grupo);        }
 
         /// <summary>
        /// Incorpora al usuario logueado al grupo. Es el destino del QR (código) y del link de la invitación por mail (token).

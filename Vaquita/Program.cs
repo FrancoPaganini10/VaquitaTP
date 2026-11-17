@@ -91,6 +91,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(app.Configuration["Smtp:Host"]))
+{
+    throw new InvalidOperationException(
+        "Falta configurar Smtp:Host. Fuera de Development la app no puede arrancar sin servidor de correo.");
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
