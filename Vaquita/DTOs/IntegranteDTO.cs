@@ -6,6 +6,7 @@ namespace Vaquita.DTOs
         public string Apodo { get; set; } = null!;
         public string Nombre { get; set; } = null!;
         public string Apellido { get; set; } = null!;
+        public string NombreMostrar { get; set; } = null!;
         public bool EsAdministrador { get; set; } = false;
     }
 }

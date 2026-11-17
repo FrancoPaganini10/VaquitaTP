@@ -24,7 +24,11 @@ namespace Vaquita.Servicios
             var integrantes = await context.Integrantes
                 .Where(i => i.GrupoId == grupoId)
                 .OrderBy(i => i.FechaIngreso).ThenBy(i => i.UsuarioId)
-                .Select(i => new { i.UsuarioId, i.Usuario.Apodo })
+                .Select(i => new {
+                    i.UsuarioId,
+                    i.Usuario.Apodo,
+                    NombreMostrar = i.Usuario.Apodo + " (" + i.Usuario.Nombre + " " + i.Usuario.Apellido + ")"
+                    })
                 .ToListAsync();
 
             var gastosPorUsuario = await context.Gastos
@@ -75,6 +79,7 @@ namespace Vaquita.Servicios
                 {
                     UsuarioId = integrante.UsuarioId,
                     Apodo = integrante.Apodo,
+                    NombreMostrar = integrante.NombreMostrar,
                     TotalGastos = pagado,
                     Saldo = pagado - cuota + hechos - recibidos
                 });
@@ -90,11 +95,11 @@ namespace Vaquita.Servicios
         private static List<DeudaDTO> CalcularDeudas(List<SaldoIntegranteDTO> saldos)
         {
             var deudores = saldos.Where(s => s.Saldo < 0)
-                .Select(s => new Pendiente { UsuarioId = s.UsuarioId, Apodo = s.Apodo, Monto = -s.Saldo })
+                .Select(s => new Pendiente { UsuarioId = s.UsuarioId, Apodo = s.NombreMostrar, Monto = -s.Saldo })
                 .ToList();
 
             var acreedores = saldos.Where(s => s.Saldo > 0)
-                .Select(s => new Pendiente { UsuarioId = s.UsuarioId, Apodo = s.Apodo, Monto = s.Saldo })
+                .Select(s => new Pendiente { UsuarioId = s.UsuarioId, Apodo = s.NombreMostrar, Monto = s.Saldo })
                 .ToList();
 
             var deudas = new List<DeudaDTO>();

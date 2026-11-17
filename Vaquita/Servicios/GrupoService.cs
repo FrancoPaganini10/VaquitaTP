@@ -106,7 +106,8 @@ namespace Vaquita.Servicios
                             Apodo = i.Usuario.Apodo,
                             Nombre = i.Usuario.Nombre,
                             Apellido = i.Usuario.Apellido,
-                            EsAdministrador = i.UsuarioId == g.AdministradorId
+                            EsAdministrador = i.UsuarioId == g.AdministradorId,
+                            NombreMostrar = i.Usuario.Apodo + " (" + i.Usuario.Nombre + " " + i.Usuario.Apellido + ")"
                         }).ToList()
                 })
                 .FirstAsync();

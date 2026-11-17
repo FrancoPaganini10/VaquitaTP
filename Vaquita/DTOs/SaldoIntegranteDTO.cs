@@ -5,7 +5,9 @@ namespace Vaquita.DTOs
     {
         public int UsuarioId { get; set; }
         public string Apodo { get; set; } = null!;
+        public string NombreMostrar { get; set; } = null!;
         public decimal TotalGastos { get; set; }
         public decimal Saldo { get; set; }
+
     }
 }
