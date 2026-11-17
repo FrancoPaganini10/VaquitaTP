@@ -40,7 +40,6 @@ namespace Vaquita.Servicios
             grupo.Integrantes.Add(new Integrante
             {
                 UsuarioId = usuarioId,
-                EsAdministrador = true,
                 FechaIngreso = ahora,
                 UltimoAcceso = ahora
             });
@@ -107,7 +106,7 @@ namespace Vaquita.Servicios
                             Apodo = i.Usuario.Apodo,
                             Nombre = i.Usuario.Nombre,
                             Apellido = i.Usuario.Apellido,
-                            EsAdministrador = i.EsAdministrador
+                            EsAdministrador = i.UsuarioId == g.AdministradorId
                         }).ToList()
                 })
                 .FirstAsync();
@@ -164,7 +163,6 @@ namespace Vaquita.Servicios
         {
             GrupoId = grupo.Id,
             UsuarioId = usuarioId,
-            EsAdministrador = false,
             FechaIngreso = ahora,
             UltimoAcceso = ahora
         });
