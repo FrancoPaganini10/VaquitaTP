@@ -6,5 +6,6 @@ namespace Vaquita.Servicios
     {
         Task<List<PagoDTO>> ObtenerPorGrupo(int grupoId, int usuarioId);
         Task<int> Crear(int grupoId, int usuarioId, PagoCreacionDTO pagoCreacion);
+        Task Anular(int grupoId, int pagoId, int usuarioId);
     }
 }

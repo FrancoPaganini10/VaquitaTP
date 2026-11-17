@@ -30,6 +30,12 @@ namespace Vaquita.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AnuladoPorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -37,6 +43,9 @@ namespace Vaquita.Migrations
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("GrupoId")
                         .HasColumnType("int");
@@ -118,9 +127,6 @@ namespace Vaquita.Migrations
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("EsAdministrador")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("FechaIngreso")
                         .HasColumnType("datetime2");
 
@@ -190,11 +196,20 @@ namespace Vaquita.Migrations
                     b.Property<int>("AcreedorId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AnuladoPorId")
+                        .HasColumnType("int");
+
                     b.Property<int>("DeudorId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("GrupoId")
                         .HasColumnType("int");

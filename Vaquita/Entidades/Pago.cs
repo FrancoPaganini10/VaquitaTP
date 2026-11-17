@@ -17,5 +17,10 @@ namespace Vaquita.Entidades
         // Quien recibe
         public int AcreedorId { get; set; }
         public Usuario Acreedor { get; set; } = null!;
+
+        //anular registro de pago
+        public bool Anulado { get; set; }
+        public DateTime? FechaAnulacion { get; set; }
+        public int? AnuladoPorId { get; set; }
     }
 }

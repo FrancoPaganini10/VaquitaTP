@@ -21,5 +21,10 @@ namespace Vaquita.Entidades
         // Opcional
         public int? RubroId { get; set; }
         public Rubro? Rubro { get; set; }
+
+        //anular registro de gasto
+        public bool Anulado { get; set; }
+        public DateTime? FechaAnulacion { get; set; }
+        public int? AnuladoPorId { get; set; }
     }
 }

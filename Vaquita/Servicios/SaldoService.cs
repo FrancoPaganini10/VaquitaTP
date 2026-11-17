@@ -32,19 +32,19 @@ namespace Vaquita.Servicios
                 .ToListAsync();
 
             var gastosPorUsuario = await context.Gastos
-                .Where(g => g.GrupoId == grupoId)
+                .Where(g => g.GrupoId == grupoId && !g.Anulado)
                 .GroupBy(g => g.PagadorId)
                 .Select(x => new { UsuarioId = x.Key, Total = x.Sum(g => g.Importe) })
                 .ToDictionaryAsync(x => x.UsuarioId, x => x.Total);
 
             var pagosHechos = await context.Pagos
-                .Where(p => p.GrupoId == grupoId)
+                .Where(p => p.GrupoId == grupoId && !p.Anulado)
                 .GroupBy(p => p.DeudorId)
                 .Select(x => new { UsuarioId = x.Key, Total = x.Sum(p => p.Importe) })
                 .ToDictionaryAsync(x => x.UsuarioId, x => x.Total);
 
             var pagosRecibidos = await context.Pagos
-                .Where(p => p.GrupoId == grupoId)
+                .Where(p => p.GrupoId == grupoId && !p.Anulado)
                 .GroupBy(p => p.AcreedorId)
                 .Select(x => new { UsuarioId = x.Key, Total = x.Sum(p => p.Importe) })
                 .ToDictionaryAsync(x => x.UsuarioId, x => x.Total);

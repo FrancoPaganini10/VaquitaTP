@@ -22,7 +22,7 @@ namespace Vaquita.Servicios
             await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId);
 
             return await context.Pagos
-                .Where(p => p.GrupoId == grupoId)
+                .Where(p => p.GrupoId == grupoId && !p.Anulado)
                 .OrderByDescending(p => p.Fecha).ThenByDescending(p => p.Id)
                 .Select(p => new PagoDTO
                 {
@@ -95,5 +95,33 @@ namespace Vaquita.Servicios
 
             return pago.Id;
         }
+
+        public async Task Anular(int grupoId, int pagoId, int usuarioId)
+        {
+    var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+
+    await using var transaccion = await context.Database.BeginTransactionAsync();
+    await context.Database.ExecuteSqlInterpolatedAsync(
+        $"SELECT Id FROM Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
+
+    var pago = await context.Pagos
+        .FirstOrDefaultAsync(p => p.Id == pagoId && p.GrupoId == grupoId)
+        ?? throw new NoEncontradoException("El pago no existe.");
+
+    if (pago.Anulado)
+        throw new ReglaDeNegocioException("El pago ya está anulado.");
+
+    // Solo quien participó del pago o el administrador
+    if (usuarioId != pago.DeudorId && usuarioId != pago.AcreedorId
+        && usuarioId != grupo.AdministradorId)
+        throw new AccesoDenegadoException("No podés anular este pago.");
+
+    pago.Anulado = true;
+    pago.FechaAnulacion = DateTime.UtcNow;
+    pago.AnuladoPorId = usuarioId;
+
+    await context.SaveChangesAsync();
+    await transaccion.CommitAsync();
+       }
     }
 }

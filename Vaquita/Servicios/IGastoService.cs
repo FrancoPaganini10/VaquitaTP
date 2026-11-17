@@ -7,5 +7,6 @@ namespace Vaquita.Servicios
         Task<List<GastoDTO>> ObtenerPorGrupo(int grupoId, int usuarioId);
         Task<List<TotalRubroDTO>> ObtenerTotalesPorRubro(int grupoId, int usuarioId);
         Task<int> Crear(int grupoId, int usuarioId, GastoCreacionDTO gastoCreacion);
+        Task Anular(int grupoId, int pagoId, int usuarioId);
     }
 }
