@@ -162,8 +162,7 @@ namespace Vaquita.Servicios
                 ? "Confirmá tu cuenta en Vaquita"
                 : "Tu enlace de acceso a Vaquita";
 
-            var cuerpo = $"<p>Hola {usuario.Apodo},</p>" +
-                         $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
+var cuerpo = $"<p>Hola {WebUtility.HtmlEncode(usuario.Apodo)},</p>" +                         $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
                          "<p>El enlace vence en 24 horas.</p>";
 
             await EnviarCorreo(usuario.Email, asunto, cuerpo);
