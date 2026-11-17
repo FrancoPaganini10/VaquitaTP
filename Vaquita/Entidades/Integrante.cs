@@ -1,6 +1,5 @@
 namespace Vaquita.Entidades
 {
-    // Tabla intermedia Usuario <-> Grupo (muchos a muchos sin salto, como PeliculaActor)
     public class Integrante
     {
         public int GrupoId { get; set; }
