@@ -34,13 +34,15 @@ namespace Vaquita.Servicios
         {
             var email = usuarioCreacion.Email.Trim().ToLowerInvariant();
 
-            var yaExisteUsuarioConEsteEmail = await context.Usuarios.AnyAsync(u => u.Email == email);
+          
+var existente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
 
-            if (yaExisteUsuarioConEsteEmail)
-            {
-                throw new ReglaDeNegocioException(
-                    "Ya existe un usuario con el email " + email + ". Pedí un enlace de acceso.");
-            }
+if (existente is not null)
+{
+    // No revelamos que el mail ya está registrado: se manda un link de acceso
+    await EnviarLink(existente, TipoToken.Login);
+    return;
+}
 
             var usuario = mapper.Map<Usuario>(usuarioCreacion);
             usuario.Email = email;
