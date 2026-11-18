@@ -55,11 +55,12 @@ namespace Vaquita.Middlewares
         }
 
         private static Task Responder(HttpContext contexto, HttpStatusCode estado, string titulo, string mensaje)
-        {
-            contexto.Response.StatusCode = (int)estado;
-            return contexto.Response.WriteAsJsonAsync(
+            {
+                contexto.Response.StatusCode = (int)estado;
+                return contexto.Response.WriteAsJsonAsync(
                 new { status = (int)estado, title = titulo, mensaje },
+                options: null,
                 contentType: "application/problem+json");
-        }
+            }
     }
 }
