@@ -49,7 +49,7 @@ namespace Vaquita.Controllers
         /// Anula un gasto registrado previamente. Solo puede anularlo el pagador o quien lo registró.
         /// </summary>
         /// <response code="400">El gasto ya está anulado o no tiene permisos para anularlo.</response>
-        [HttpDelete("{grupoId:int}/gastos/{gastoId:int}")]
+        [HttpDelete("{gastoId:int}")]
         public async Task<ActionResult> AnularGasto(int grupoId, int gastoId)
         {
             await servicio.Anular(grupoId, gastoId, User.ObtenerUsuarioId());
