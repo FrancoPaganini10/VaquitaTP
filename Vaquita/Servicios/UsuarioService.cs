@@ -78,7 +78,7 @@ if (existente is not null)
 
             var tokenVerificacion = await context.TokensVerificacion
                 .Include(t => t.Usuario)
-                .FirstOrDefaultAsync(t => t.Token == hash && !t.Usado
+                .FirstOrDefaultAsync(t => t.TokenHash == hash && !t.Usado
                     && t.FechaVencimiento > DateTime.UtcNow);
 
             if (tokenVerificacion is null)
@@ -183,7 +183,7 @@ if (existente is not null)
             {
                 UsuarioId = usuario.Id,
                 Tipo = tipo,
-                Token = TokenHash.Hashear(token),
+                TokenHash = TokenHash.Hashear(token),
                 FechaVencimiento = DateTime.UtcNow.AddHours(24)
             };
 

@@ -126,7 +126,7 @@ namespace Vaquita.Servicios
 
         invitacion = await context.Invitaciones
             .Include(i => i.Grupo)
-            .FirstOrDefaultAsync(i => i.Token == hashInvitacion
+            .FirstOrDefaultAsync(i => i.TokenHash == hashInvitacion
                 && i.Estado == EstadoInvitacion.Pendiente
                 && i.FechaVencimiento > DateTime.UtcNow);
 
@@ -204,7 +204,7 @@ namespace Vaquita.Servicios
                 GrupoId = grupoId,
                 InvitadoPorId = usuarioId,
                 Email = email,
-                Token = TokenHash.Hashear(token),
+                TokenHash = TokenHash.Hashear(token),
                 Estado = EstadoInvitacion.Pendiente,
                 FechaEnvio = DateTime.UtcNow,
                 FechaVencimiento = DateTime.UtcNow.AddDays(7)
