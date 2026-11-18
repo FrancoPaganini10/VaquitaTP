@@ -37,7 +37,7 @@ namespace Vaquita.Controllers
         /// Anula un pago registrado previamente. Solo puede anularlo el deudor o el acreedor.
         /// </summary>
         /// <response code="400">El pago ya está anulado o no tiene permisos para anularlo.</response>
-        [HttpDelete("{grupoId:int}/pagos/{pagoId:int}")]
+        [HttpDelete("{pagoId:int}")]
         public async Task<ActionResult> AnularPago(int grupoId, int pagoId)
         {
             await servicio.Anular(grupoId, pagoId, User.ObtenerUsuarioId());

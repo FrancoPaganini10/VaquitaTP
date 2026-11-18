@@ -115,16 +115,19 @@ namespace Vaquita.Servicios
         }
 
         // Punto de entrada común del QR y del link del mail de invitación
-        public async Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion){
+       public async Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion)
+{
     Grupo? grupo;
     Invitacion? invitacion = null;
 
     if (!string.IsNullOrWhiteSpace(tokenInvitacion))
     {
         // Camino invitación por mail
+        var hashInvitacion = TokenHash.Hashear(tokenInvitacion);
+
         invitacion = await context.Invitaciones
             .Include(i => i.Grupo)
-            .FirstOrDefaultAsync(i => i.Token == tokenInvitacion
+            .FirstOrDefaultAsync(i => i.TokenHash == hashInvitacion
                 && i.Estado == EstadoInvitacion.Pendiente
                 && i.FechaVencimiento > DateTime.UtcNow);
 
@@ -132,7 +135,9 @@ namespace Vaquita.Servicios
             throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
 
         var emailUsuario = await context.Usuarios
-            .Where(u => u.Id == usuarioId).Select(u => u.Email).FirstAsync();
+            .Where(u => u.Id == usuarioId)
+            .Select(u => u.Email)
+            .FirstAsync();
 
         if (!string.Equals(invitacion.Email, emailUsuario, StringComparison.OrdinalIgnoreCase))
             throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
@@ -176,46 +181,49 @@ namespace Vaquita.Servicios
 
         // Invitación por mail (solo el administrador del grupo)
         public async Task Invitar(int grupoId, int usuarioId, InvitacionCreacionDTO invitacionCreacion)
-        {
-            var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+{
+    var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
 
-            if (grupo.AdministradorId != usuarioId)
-            {
-                throw new AccesoDenegadoException("Solo el administrador puede invitar integrantes.");
-            }
+    if (grupo.AdministradorId != usuarioId)
+    {
+        throw new AccesoDenegadoException("Solo el administrador puede invitar integrantes.");
+    }
 
-            var email = invitacionCreacion.Email.Trim().ToLowerInvariant();
+    var email = invitacionCreacion.Email.Trim().ToLowerInvariant();
 
-            var yaEsIntegrante = await context.Integrantes
-                .AnyAsync(i => i.GrupoId == grupoId && i.Usuario.Email == email);
+    var yaEsIntegrante = await context.Integrantes
+        .AnyAsync(i => i.GrupoId == grupoId && i.Usuario.Email == email);
 
-            if (yaEsIntegrante)
-            {
-                throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
-            }
+    if (yaEsIntegrante)
+    {
+        throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
+    }
 
-            var invitacion = new Invitacion
-            {
-                GrupoId = grupoId,
-                InvitadoPorId = usuarioId,
-                Email = email,
-                Token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
-                Estado = EstadoInvitacion.Pendiente,
-                FechaEnvio = DateTime.UtcNow,
-                FechaVencimiento = DateTime.UtcNow.AddDays(7)
-            };
+    // El token original se envía por correo; en la base se guarda únicamente su hash.
+    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-            context.Add(invitacion);
-            await context.SaveChangesAsync();
+    var invitacion = new Invitacion
+    {
+        GrupoId = grupoId,
+        InvitadoPorId = usuarioId,
+        Email = email,
+        TokenHash = TokenHash.Hashear(token),
+        Estado = EstadoInvitacion.Pendiente,
+        FechaEnvio = DateTime.UtcNow,
+        FechaVencimiento = DateTime.UtcNow.AddDays(7)
+    };
 
-            // Mismo destino que el QR: /unirse/{grupoId} (con el token de la invitación)
-            var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={invitacion.Token}";
+    context.Add(invitacion);
+    await context.SaveChangesAsync();
 
-var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +                         $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
-                         "<p>Tenés que estar registrado en la app para unirte.</p>";
+    var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={token}";
 
-            await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
-        }
+    var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +
+                 $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
+                 "<p>Tenés que estar registrado en la app para unirte.</p>";
+
+    await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
+}
 
         // QR con la URL que redirige al "punto de unión" de la app
         private byte[] GenerarQr(string codigo)

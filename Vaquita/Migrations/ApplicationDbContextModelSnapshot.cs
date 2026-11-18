@@ -168,7 +168,7 @@ namespace Vaquita.Migrations
                     b.Property<int>("InvitadoPorId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Token")
+                    b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
@@ -179,7 +179,7 @@ namespace Vaquita.Migrations
 
                     b.HasIndex("InvitadoPorId");
 
-                    b.HasIndex("Token")
+                    b.HasIndex("TokenHash")
                         .IsUnique();
 
                     b.ToTable("Invitaciones");
@@ -296,7 +296,7 @@ namespace Vaquita.Migrations
                     b.Property<int>("Tipo")
                         .HasColumnType("int");
 
-                    b.Property<string>("Token")
+                    b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
@@ -309,7 +309,7 @@ namespace Vaquita.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Token")
+                    b.HasIndex("TokenHash")
                         .IsUnique();
 
                     b.HasIndex("UsuarioId");
