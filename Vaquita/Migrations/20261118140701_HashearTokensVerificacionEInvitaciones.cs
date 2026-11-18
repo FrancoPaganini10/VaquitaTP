@@ -11,6 +11,10 @@ namespace Vaquita.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DELETE FROM [TokensVerificacion];");
+            migrationBuilder.Sql(
+            "UPDATE [Invitaciones] " +
+            "SET [Token] = CONVERT(varchar(64), " +
+            "HASHBYTES('SHA2_256', CONVERT(varchar(150), [Token])), 2);");
             migrationBuilder.RenameColumn(
                 name: "Token",
                 table: "TokensVerificacion",
