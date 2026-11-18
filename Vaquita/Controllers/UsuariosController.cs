@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Vaquita.DTOs;
 using Vaquita.Servicios;
+using Vaquita.Utilidades;
 
 namespace Vaquita.Controllers
 {
@@ -21,6 +24,7 @@ namespace Vaquita.Controllers
         /// <response code="200">Usuario creado, se envió el mail.</response>
         /// <response code="400">Ya existe un usuario con ese email.</response>
         [HttpPost("registrar")]
+        [EnableRateLimiting("envio-mail")]
         public async Task<ActionResult> Registrar(UsuarioCreacionDTO usuarioCreacion)
         {
             await servicio.Registrar(usuarioCreacion);
@@ -31,11 +35,20 @@ namespace Vaquita.Controllers
         /// Login: envía al mail del usuario un link de acceso.
         /// </summary>
         [HttpPost("acceso")]
+        [EnableRateLimiting("envio-mail")]
         public async Task<ActionResult> SolicitarAcceso(SolicitudAccesoDTO solicitud)
         {
             await servicio.SolicitarAcceso(solicitud.Email);
             return Ok();
         }
+
+        /// <summary>
+        /// Datos del usuario logueado (el JWT trae solo id y email).
+        /// </summary>
+        [HttpGet("yo")]
+        [Authorize]
+        public async Task<ActionResult<UsuarioDTO>> GetYo() =>
+            await servicio.ObtenerActual(User.ObtenerUsuarioId());
 
         /// <summary>
         /// Valida el token del link del mail (alta o login) y devuelve el JWT.

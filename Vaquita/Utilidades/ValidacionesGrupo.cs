@@ -13,17 +13,13 @@ namespace Vaquita.Utilidades
         {
             var grupo = await context.Grupos.FirstOrDefaultAsync(g => g.Id == grupoId);
 
-            if (grupo is null)
-            {
-                throw new NoEncontradoException("El grupo no existe.");
-            }
-
-            var esIntegrante = await context.Integrantes
+            var esIntegrante = grupo is not null && await context.Integrantes
                 .AnyAsync(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId);
 
-            if (!esIntegrante)
+            // Mismo error exista o no el grupo: así no se puede averiguar qué grupos existen
+            if (grupo is null || !esIntegrante)
             {
-                throw new AccesoDenegadoException("No sos integrante de este grupo.");
+                throw new NoEncontradoException("El grupo no existe o no sos integrante.");
             }
 
             if (soloAbierto && !grupo.Activo)

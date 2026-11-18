@@ -10,6 +10,7 @@ using System.Text;
 using Vaquita.DTOs;
 using Vaquita.Entidades;
 using Vaquita.Excepciones;
+using Vaquita.Utilidades;
 
 namespace Vaquita.Servicios
 {
@@ -73,9 +74,11 @@ if (existente is not null)
         // Al presionar el link del mail: valida el token y devuelve el JWT
         public async Task<RespuestaAutenticacionDTO> Verificar(string token)
         {
+            var hash = TokenHash.Hashear(token);
+
             var tokenVerificacion = await context.TokensVerificacion
                 .Include(t => t.Usuario)
-                .FirstOrDefaultAsync(t => t.Token == token && !t.Usado
+                .FirstOrDefaultAsync(t => t.Token == hash && !t.Usado
                     && t.FechaVencimiento > DateTime.UtcNow);
 
             if (tokenVerificacion is null)
@@ -89,6 +92,20 @@ if (existente is not null)
 
             return ConstruirToken(tokenVerificacion.Usuario);
         }
+
+        public async Task<UsuarioDTO> ObtenerActual(int usuarioId) =>
+            await context.Usuarios
+                .Where(u => u.Id == usuarioId)
+                .Select(u => new UsuarioDTO
+                {
+                    Id = u.Id,
+                    Nombre = u.Nombre,
+                    Apellido = u.Apellido,
+                    Apodo = u.Apodo,
+                    Email = u.Email
+                })
+                .FirstOrDefaultAsync()
+            ?? throw new NoEncontradoException("El usuario no existe.");
 
         public RespuestaAutenticacionDTO ConstruirToken(Usuario usuario)
         {
@@ -147,18 +164,33 @@ if (existente is not null)
 
         private async Task EnviarLink(Usuario usuario, TipoToken tipo)
         {
+            // Cooldown por destinatario: si ya se le mandó un link hace menos de 1 minuto no se
+            // manda otro (evita usar la app para llenarle la casilla a alguien desde varias IP).
+            // El token se creó 24 h antes de su vencimiento.
+            var limite = DateTime.UtcNow.AddHours(24).AddMinutes(-1);
+            var envioReciente = await context.TokensVerificacion
+                .AnyAsync(t => t.UsuarioId == usuario.Id && t.FechaVencimiento > limite);
+
+            if (envioReciente)
+            {
+                return;
+            }
+
+            // En la base se guarda solo el hash; el token real viaja únicamente en el mail
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
             var tokenVerificacion = new TokenVerificacion
             {
                 UsuarioId = usuario.Id,
                 Tipo = tipo,
-                Token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+                Token = TokenHash.Hashear(token),
                 FechaVencimiento = DateTime.UtcNow.AddHours(24)
             };
 
             context.Add(tokenVerificacion);
             await context.SaveChangesAsync();
 
-            var link = $"{configuration["FrontendUrl"]}/verificar?token={tokenVerificacion.Token}";
+            var link = $"{configuration["FrontendUrl"]}/verificar?token={token}";
 
             var asunto = tipo == TipoToken.Alta
                 ? "Confirmá tu cuenta en Vaquita"

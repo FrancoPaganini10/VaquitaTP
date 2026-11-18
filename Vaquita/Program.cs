@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Vaquita;
 using Vaquita.Middlewares;
 using Vaquita.Servicios;
@@ -18,6 +19,21 @@ var jwtKey = builder.Configuration["JwtKey"]
 
 builder.Services.AddControllers().AddJsonOptions(opciones =>
     opciones.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+// Límite de pedidos por IP para los endpoints que mandan mails (registrar / acceso)
+builder.Services.AddRateLimiter(opciones =>
+{
+    opciones.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opciones.AddPolicy("envio-mail", contexto =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opciones =>
@@ -105,7 +121,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors();     
+app.UseCors();
+app.UseRateLimiter();
 app.UseMiddleware<ManejadorErroresMiddleware>();
 
 app.UseAuthentication();

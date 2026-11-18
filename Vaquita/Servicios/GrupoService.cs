@@ -122,9 +122,11 @@ namespace Vaquita.Servicios
     if (!string.IsNullOrWhiteSpace(tokenInvitacion))
     {
         // Camino invitación por mail
+        var hashInvitacion = TokenHash.Hashear(tokenInvitacion);
+
         invitacion = await context.Invitaciones
             .Include(i => i.Grupo)
-            .FirstOrDefaultAsync(i => i.Token == tokenInvitacion
+            .FirstOrDefaultAsync(i => i.Token == hashInvitacion
                 && i.Estado == EstadoInvitacion.Pendiente
                 && i.FechaVencimiento > DateTime.UtcNow);
 
@@ -194,12 +196,15 @@ namespace Vaquita.Servicios
                 throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
             }
 
+            // En la base se guarda solo el hash; el token real viaja únicamente en el mail
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
             var invitacion = new Invitacion
             {
                 GrupoId = grupoId,
                 InvitadoPorId = usuarioId,
                 Email = email,
-                Token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+                Token = TokenHash.Hashear(token),
                 Estado = EstadoInvitacion.Pendiente,
                 FechaEnvio = DateTime.UtcNow,
                 FechaVencimiento = DateTime.UtcNow.AddDays(7)
@@ -209,7 +214,7 @@ namespace Vaquita.Servicios
             await context.SaveChangesAsync();
 
             // Mismo destino que el QR: /unirse/{grupoId} (con el token de la invitación)
-            var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={invitacion.Token}";
+            var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={token}";
 
 var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +                         $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
                          "<p>Tenés que estar registrado en la app para unirte.</p>";
