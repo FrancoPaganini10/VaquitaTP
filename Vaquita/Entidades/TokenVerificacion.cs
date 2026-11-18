@@ -9,7 +9,7 @@ namespace Vaquita.Entidades
     public class TokenVerificacion
     {
         public int Id { get; set; }
-        public string Token { get; set; } = null!;
+        public string TokenHash { get; set; } = null!;
         public TipoToken Tipo { get; set; }
         public DateTime FechaVencimiento { get; set; }
         public bool Usado { get; set; }

@@ -10,6 +10,7 @@ using System.Text;
 using Vaquita.DTOs;
 using Vaquita.Entidades;
 using Vaquita.Excepciones;
+using Vaquita.Utilidades;
 
 namespace Vaquita.Servicios
 {
@@ -71,24 +72,26 @@ if (existente is not null)
         }
 
         // Al presionar el link del mail: valida el token y devuelve el JWT
-        public async Task<RespuestaAutenticacionDTO> Verificar(string token)
-        {
-            var tokenVerificacion = await context.TokensVerificacion
-                .Include(t => t.Usuario)
-                .FirstOrDefaultAsync(t => t.Token == token && !t.Usado
-                    && t.FechaVencimiento > DateTime.UtcNow);
+       public async Task<RespuestaAutenticacionDTO> Verificar(string token)
+{
+    var hash = TokenHash.Hashear(token);
 
-            if (tokenVerificacion is null)
-            {
-                throw new ReglaDeNegocioException("El enlace no es válido o ya venció.");
-            }
+    var tokenVerificacion = await context.TokensVerificacion
+        .Include(t => t.Usuario)
+        .FirstOrDefaultAsync(t => t.TokenHash == hash && !t.Usado
+            && t.FechaVencimiento > DateTime.UtcNow);
 
-            tokenVerificacion.Usado = true;
-            tokenVerificacion.Usuario.EmailVerificado = true;
-            await context.SaveChangesAsync();
+    if (tokenVerificacion is null)
+    {
+        throw new ReglaDeNegocioException("El enlace no es válido o ya venció.");
+    }
 
-            return ConstruirToken(tokenVerificacion.Usuario);
-        }
+    tokenVerificacion.Usado = true;
+    tokenVerificacion.Usuario.EmailVerificado = true;
+    await context.SaveChangesAsync();
+
+    return ConstruirToken(tokenVerificacion.Usuario);
+}
 
         public RespuestaAutenticacionDTO ConstruirToken(Usuario usuario)
         {
@@ -145,29 +148,33 @@ if (existente is not null)
             await cliente.SendMailAsync(mensaje);
         }
 
-        private async Task EnviarLink(Usuario usuario, TipoToken tipo)
-        {
-            var tokenVerificacion = new TokenVerificacion
-            {
-                UsuarioId = usuario.Id,
-                Tipo = tipo,
-                Token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
-                FechaVencimiento = DateTime.UtcNow.AddHours(24)
-            };
+       private async Task EnviarLink(Usuario usuario, TipoToken tipo)
+{
+    // El token original se envía por correo; en la base se guarda únicamente su hash.
+    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-            context.Add(tokenVerificacion);
-            await context.SaveChangesAsync();
+    var tokenVerificacion = new TokenVerificacion
+    {
+        UsuarioId = usuario.Id,
+        Tipo = tipo,
+        TokenHash = TokenHash.Hashear(token),
+        FechaVencimiento = DateTime.UtcNow.AddHours(24)
+    };
 
-            var link = $"{configuration["FrontendUrl"]}/verificar?token={tokenVerificacion.Token}";
+    context.Add(tokenVerificacion);
+    await context.SaveChangesAsync();
 
-            var asunto = tipo == TipoToken.Alta
-                ? "Confirmá tu cuenta en Vaquita"
-                : "Tu enlace de acceso a Vaquita";
+    var link = $"{configuration["FrontendUrl"]}/verificar?token={token}";
 
-var cuerpo = $"<p>Hola {WebUtility.HtmlEncode(usuario.Apodo)},</p>" +                         $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
-                         "<p>El enlace vence en 24 horas.</p>";
+    var asunto = tipo == TipoToken.Alta
+        ? "Confirmá tu cuenta en Vaquita"
+        : "Tu enlace de acceso a Vaquita";
 
-            await EnviarCorreo(usuario.Email, asunto, cuerpo);
-        }
+    var cuerpo = $"<p>Hola {WebUtility.HtmlEncode(usuario.Apodo)},</p>" +
+                 $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
+                 "<p>El enlace vence en 24 horas.</p>";
+
+    await EnviarCorreo(usuario.Email, asunto, cuerpo);
+}
     }
 }

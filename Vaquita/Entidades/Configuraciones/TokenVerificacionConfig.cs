@@ -7,7 +7,7 @@ namespace Vaquita.Entidades.Configuraciones
     {
         public void Configure(EntityTypeBuilder<TokenVerificacion> builder)
         {
-            builder.HasIndex(t => t.Token).IsUnique();
+            builder.HasIndex(t => t.TokenHash).IsUnique();
 
             builder.HasOne(t => t.Usuario)
                 .WithMany(u => u.Tokens)

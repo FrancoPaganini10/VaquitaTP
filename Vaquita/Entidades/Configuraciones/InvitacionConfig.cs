@@ -8,7 +8,7 @@ namespace Vaquita.Entidades.Configuraciones
         public void Configure(EntityTypeBuilder<Invitacion> builder)
         {
             builder.Property(i => i.Email).HasMaxLength(200);
-            builder.HasIndex(i => i.Token).IsUnique();
+            builder.HasIndex(i => i.TokenHash).IsUnique();
 
             builder.HasOne(i => i.Grupo)
                 .WithMany(g => g.Invitaciones)
