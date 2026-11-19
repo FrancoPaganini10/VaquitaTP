@@ -1,5 +1,6 @@
 using System.Net;
 using Vaquita.Excepciones;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Vaquita.Middlewares
 {
@@ -23,27 +24,40 @@ namespace Vaquita.Middlewares
             catch (ReglaDeNegocioException ex)
             {
                 logger.LogInformation(ex, "Regla de negocio incumplida");
-                contexto.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await contexto.Response.WriteAsJsonAsync(new { mensaje = ex.Message });
+                await Responder(contexto, HttpStatusCode.BadRequest, "Regla de negocio incumplida", ex.Message);
             }
             catch (NoEncontradoException ex)
             {
                 logger.LogInformation(ex, "Recurso no encontrado");
-                contexto.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                await contexto.Response.WriteAsJsonAsync(new { mensaje = ex.Message });
+                await Responder(contexto, HttpStatusCode.NotFound, "Recurso no encontrado", ex.Message);
             }
             catch (AccesoDenegadoException ex)
             {
                 logger.LogInformation(ex, "Acceso denegado");
-                contexto.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                await contexto.Response.WriteAsJsonAsync(new { mensaje = ex.Message });
+                await Responder(contexto, HttpStatusCode.Forbidden, "Acceso denegado", ex.Message);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error no controlado");
-                contexto.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                await contexto.Response.WriteAsJsonAsync(new { mensaje = "Ocurrió un error inesperado" });
+                await Responder(contexto, HttpStatusCode.InternalServerError, "Error interno",
+                    "Ocurrió un error inesperado");
             }
+        }
+
+        private static async Task Responder(HttpContext contexto, HttpStatusCode status,
+            string titulo, string detalle)
+        {
+            contexto.Response.StatusCode = (int)status;
+
+            var problema = new ProblemDetails
+            {
+                Status = (int)status,
+                Title = titulo,
+                Detail = detalle
+            };
+
+            await contexto.Response.WriteAsJsonAsync(problema, options: null,
+                contentType: "application/problem+json");
         }
     }
 }
