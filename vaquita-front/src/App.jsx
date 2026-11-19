@@ -21,7 +21,7 @@ export default function App() {
         <Route path="/login" element={<SoloVisitantes><Login /></SoloVisitantes>} />
         <Route path="/registro" element={<SoloVisitantes><Registro /></SoloVisitantes>} />
         <Route path="/verificar" element={<Verificar />} />
-        <Route path="/unirse" element={<Privada><Unirse /></Privada>} />
+        <Route path="/unirse/:codigo" element={<Privada><Unirse /></Privada>} />
 
         <Route element={<Privada><Layout /></Privada>}>
           <Route index element={<Inicio />} />

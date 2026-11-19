@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { gastosApi } from "../api/endpoints.js";
+import AnularModal from "../components/AnularModal.jsx";
 import { Cargando, ErrorBanner } from "../components/Estado.jsx";
 import GastoModal from "../components/GastoModal.jsx";
 import { useFetch } from "../hooks/useFetch.js";
@@ -11,6 +12,7 @@ export default function GrupoGastos() {
   const { grupo, miId } = useOutletContext();
   const { data: gastos, error, loading, reload } = useFetch(() => gastosApi.listar(grupo.id), [grupo.id]);
   const [agregando, setAgregando] = useState(false);
+  const [gastoAAnular, setGastoAAnular] = useState(null);
 
   const total = gastos?.reduce((suma, g) => suma + g.importe, 0) ?? 0;
 
@@ -44,6 +46,9 @@ export default function GrupoGastos() {
                 <th scope="col" className="num">
                   Importe
                 </th>
+                <th scope="col">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +67,13 @@ export default function GrupoGastos() {
                     </span>
                   </td>
                   <td className="num">{moneda(g.importe)}</td>
+                  <td>
+                    {grupo.activo && (
+                      <button type="button" className="btn btn-ghost btn-small" onClick={() => setGastoAAnular(g)}>
+                        Anular
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -69,6 +81,7 @@ export default function GrupoGastos() {
               <tr>
                 <td colSpan={2}>Total</td>
                 <td className="num">{moneda(total)}</td>
+                <td />
               </tr>
             </tfoot>
           </table>
@@ -81,6 +94,20 @@ export default function GrupoGastos() {
         grupo={grupo}
         miId={miId}
         onGuardado={reload}
+      />
+
+      <AnularModal
+        item={gastoAAnular}
+        titulo="¿Anular el gasto?"
+        descripcion={(g) => (
+          <>
+            Se anula el gasto <strong>{g.descripcion}</strong> de <strong>{moneda(g.importe)}</strong> pagado por{" "}
+            <strong>{g.pagador}</strong>. Los saldos se van a recalcular.
+          </>
+        )}
+        onAnular={(g) => gastosApi.anular(grupo.id, g.id)}
+        onClose={() => setGastoAAnular(null)}
+        onAnulado={reload}
       />
     </section>
   );

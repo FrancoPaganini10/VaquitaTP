@@ -16,8 +16,8 @@ export const onSesionVencida = (fn) => {
   alVencerSesion = fn;
 };
 
-// El back responde dos formatos: { mensaje } (reglas de negocio) y
-// ProblemDetails con { errors: { Campo: [..] } } (validación de DTO). Acá los unificamos.
+// El back responde siempre ProblemDetails: el mensaje está en `detail` y, en la validación
+// de DTO, además viene `errors: { Campo: [..] }` con los mensajes por campo.
 async function construirError(res) {
   let data = null;
   try {
@@ -36,8 +36,8 @@ async function construirError(res) {
   }
 
   const mensaje =
-    data?.mensaje ??
-    (fieldErrors && Object.values(fieldErrors)[0]) ??
+    data?.detail ??
+    (fieldErrors && Object.values(fieldErrors).join(" ")) ??
     data?.title ??
     (res.status === 403 ? "No tenés permiso para hacer esto." : `Error ${res.status}`);
 

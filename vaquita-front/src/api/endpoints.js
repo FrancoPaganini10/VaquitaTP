@@ -30,11 +30,13 @@ export const gastosApi = {
   listar: (grupoId) => request(`/grupos/${grupoId}/gastos`),
   porRubro: (grupoId) => request(`/grupos/${grupoId}/gastos/por-rubro`),
   crear: (grupoId, dto) => request(`/grupos/${grupoId}/gastos`, { method: "POST", body: dto }),
+  anular: (grupoId, gastoId) => request(`/grupos/${grupoId}/gastos/${gastoId}`, { method: "DELETE" }),
 };
 
 export const pagosApi = {
   listar: (grupoId) => request(`/grupos/${grupoId}/pagos`),
   crear: (grupoId, dto) => request(`/grupos/${grupoId}/pagos`, { method: "POST", body: dto }),
+  anular: (grupoId, pagoId) => request(`/grupos/${grupoId}/pagos/${pagoId}`, { method: "DELETE" }),
 };
 
 export const saldosApi = {
