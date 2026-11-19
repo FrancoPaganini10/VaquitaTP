@@ -1,6 +1,7 @@
 using System.Net;
 using Vaquita.Excepciones;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Vaquita.Middlewares
 {
@@ -35,6 +36,12 @@ namespace Vaquita.Middlewares
             {
                 logger.LogInformation(ex, "Acceso denegado");
                 await Responder(contexto, HttpStatusCode.Forbidden, "Acceso denegado", ex.Message);
+            }
+            catch (DbUpdateException ex)
+            {
+                logger.LogError(ex, "Error de base de datos");
+                await Responder(contexto, HttpStatusCode.InternalServerError, "Error de base de datos",
+                    "Ocurrió un error al acceder a la base de datos, no se puedieron guardar los cambios, verifique que los datos sean correctos y que no se esté violando ninguna restricción de la base de datos.");
             }
             catch (Exception ex)
             {
