@@ -63,22 +63,29 @@ namespace Vaquita.Servicios
             await using var transaccion = await context.Database.BeginTransactionAsync();          
             await context.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM dbo.Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
 
-            // No se puede pagar más que lo adeudado según el Cuadro 2
-            var resumen = await saldoService.Calcular(grupoId);
+// El deudor debe tener deuda, el acreedor saldo a favor, y el pago no puede superar el mínimo de ambos
+var resumen = await saldoService.Calcular(grupoId);
 
-            var deuda = resumen.Deudas.FirstOrDefault(d =>
-                d.DeudorId == pagoCreacion.DeudorId && d.AcreedorId == pagoCreacion.AcreedorId);
+var saldoDeudor = resumen.Saldos.FirstOrDefault(s => s.UsuarioId == pagoCreacion.DeudorId)?.Saldo ?? 0;
+var saldoAcreedor = resumen.Saldos.FirstOrDefault(s => s.UsuarioId == pagoCreacion.AcreedorId)?.Saldo ?? 0;
 
-            if (deuda is null)
-            {
-                throw new ReglaDeNegocioException("No hay una deuda pendiente entre esos integrantes.");
-            }
+if (saldoDeudor >= 0)
+{
+    throw new ReglaDeNegocioException("El deudor no tiene deuda pendiente.");
+}
 
-            if (pagoCreacion.Importe > deuda.Importe)
-            {
-                throw new ReglaDeNegocioException(
-                    $"El pago supera la deuda actual ({deuda.Importe:N2}).");
-            }
+if (saldoAcreedor <= 0)
+{
+    throw new ReglaDeNegocioException("El acreedor no tiene saldo a favor.");
+}
+
+var maximo = Math.Round(Math.Min(-saldoDeudor, saldoAcreedor), 2);
+
+if (pagoCreacion.Importe > maximo)
+{
+    throw new ReglaDeNegocioException(
+        $"El pago supera el máximo permitido ({maximo:N2}).");
+}
 
             var pago = new Pago
             {
