@@ -149,7 +149,10 @@ if (existente is not null)
         }
 
        private async Task EnviarLink(Usuario usuario, TipoToken tipo)
-{
+{    // Limpiar los tokens que ya vencieron
+    await context.TokensVerificacion
+        .Where(t => t.FechaVencimiento <= DateTime.UtcNow)
+        .ExecuteDeleteAsync();
     // El token original se envía por correo; en la base se guarda únicamente su hash.
     var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 

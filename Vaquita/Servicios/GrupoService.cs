@@ -198,6 +198,10 @@ namespace Vaquita.Servicios
     {
         throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
     }
+        // Marcar como vencidas las invitaciones pendientes cuyo plazo ya pasó
+    await context.Invitaciones
+        .Where(i => i.Estado == EstadoInvitacion.Pendiente && i.FechaVencimiento <= DateTime.UtcNow)
+        .ExecuteUpdateAsync(s => s.SetProperty(i => i.Estado, EstadoInvitacion.Vencida));
 
     // El token original se envía por correo; en la base se guarda únicamente su hash.
     var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
