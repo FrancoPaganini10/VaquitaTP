@@ -11,7 +11,7 @@ namespace Vaquita.Entidades
     {
         public int Id { get; set; }
         public string Email { get; set; } = null!;
-        public string Token { get; set; } = null!;
+        public string TokenHash { get; set; } = null!;
         public EstadoInvitacion Estado { get; set; } = EstadoInvitacion.Pendiente;
         public DateTime FechaEnvio { get; set; }
         public DateTime FechaVencimiento { get; set; }
