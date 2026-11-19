@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
-using System.Text.Json.Serialization;
 using Vaquita;
 using Vaquita.Middlewares;
 using Vaquita.Servicios;
@@ -16,8 +15,7 @@ var jwtKey = builder.Configuration["JwtKey"]
         "Falta la configuración 'JwtKey'. Definila con user-secrets o variable de entorno.");
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(opciones =>
-    opciones.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opciones =>
