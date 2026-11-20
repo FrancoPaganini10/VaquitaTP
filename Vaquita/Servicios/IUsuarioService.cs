@@ -8,6 +8,7 @@ namespace Vaquita.Servicios
         Task Registrar(UsuarioCreacionDTO usuarioCreacion);
         Task SolicitarAcceso(string email);
         Task<RespuestaAutenticacionDTO> Verificar(string token);
+        Task<UsuarioDTO> ObtenerYo(int usuarioId);
         RespuestaAutenticacionDTO ConstruirToken(Usuario usuario);
         Task EnviarCorreo(string destino, string asunto, string cuerpoHtml);
     }

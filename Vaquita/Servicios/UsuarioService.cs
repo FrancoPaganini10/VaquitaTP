@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Net;
@@ -18,15 +17,13 @@ namespace Vaquita.Servicios
     {
         private readonly ApplicationDbContext context;
         private readonly IConfiguration configuration;
-        private readonly IMapper mapper;
         private readonly ILogger<UsuarioService> logger;
 
         public UsuarioService(ApplicationDbContext context, IConfiguration configuration,
-            IMapper mapper, ILogger<UsuarioService> logger)
+            ILogger<UsuarioService> logger)
         {
             this.context = context;
             this.configuration = configuration;
-            this.mapper = mapper;
             this.logger = logger;
         }
 
@@ -45,8 +42,13 @@ if (existente is not null)
     return;
 }
 
-            var usuario = mapper.Map<Usuario>(usuarioCreacion);
-            usuario.Email = email;
+            var usuario = new Usuario
+            {
+                Apellido = usuarioCreacion.Apellido,
+                Nombre = usuarioCreacion.Nombre,
+                Apodo = usuarioCreacion.Apodo,
+                Email = email
+            };
             usuario.FechaAlta = DateTime.UtcNow;
 
             context.Add(usuario);
@@ -54,6 +56,21 @@ if (existente is not null)
 
             await EnviarLink(usuario, TipoToken.Alta);
         }
+
+        // Datos del usuario logueado (el JWT trae solo id y email)
+        public async Task<UsuarioDTO> ObtenerYo(int usuarioId) =>
+            await context.Usuarios
+                .Where(u => u.Id == usuarioId)
+                .Select(u => new UsuarioDTO
+                {
+                    Id = u.Id,
+                    Apodo = u.Apodo,
+                    Nombre = u.Nombre,
+                    Apellido = u.Apellido,
+                    Email = u.Email
+                })
+                .FirstOrDefaultAsync()
+            ?? throw new NoEncontradoException("El usuario no existe.");
 
         // Login: envía un link de acceso al mail (si el usuario existe)
         public async Task SolicitarAcceso(string email)

@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using System.Net;
@@ -13,16 +12,14 @@ namespace Vaquita.Servicios
     public class GrupoService : IGrupoService
     {
         private readonly ApplicationDbContext context;
-        private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         private readonly IUsuarioService usuarioService;
         private readonly ISaldoService saldoService;
 
-        public GrupoService(ApplicationDbContext context, IMapper mapper,
+        public GrupoService(ApplicationDbContext context,
             IConfiguration configuration, IUsuarioService usuarioService, ISaldoService saldoService)
         {
             this.context = context;
-            this.mapper = mapper;
             this.configuration = configuration;
             this.usuarioService = usuarioService;
             this.saldoService = saldoService;
@@ -32,7 +29,7 @@ namespace Vaquita.Servicios
         {
             var ahora = DateTime.UtcNow;
 
-            var grupo = mapper.Map<Grupo>(grupoCreacion);
+            var grupo = new Grupo { Descripcion = grupoCreacion.Descripcion };
             grupo.AdministradorId = usuarioId;
             grupo.Activo = true;
             grupo.FechaCreacion = ahora;
