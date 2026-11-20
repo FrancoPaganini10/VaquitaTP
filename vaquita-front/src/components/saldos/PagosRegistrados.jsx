@@ -1,8 +1,8 @@
 import { fecha, moneda } from "../../lib/format.js";
 import Panel from "../Panel.jsx";
 
-// Anula quien participó del pago (deudor o acreedor) o el administrador, y solo con el grupo abierto.
-export default function PagosRegistrados({ pagos, grupo, miId, soyAdmin, onAnular }) {
+// El botón se muestra a cualquier integrante con el grupo abierto; el back valida quién puede anular.
+export default function PagosRegistrados({ pagos, grupo, onAnular }) {
   return (
     <Panel titulo="Pagos registrados">
       {!pagos?.length ? (
@@ -29,7 +29,7 @@ export default function PagosRegistrados({ pagos, grupo, miId, soyAdmin, onAnula
                   </td>
                   <td className="num">{moneda(p.importe)}</td>
                   <td>
-                    {grupo.activo && (soyAdmin || miId === p.deudorId || miId === p.acreedorId) && (
+                    {grupo.activo && (
                       <button type="button" className="btn btn-ghost btn-small" onClick={() => onAnular(p)}>
                         Anular
                       </button>

@@ -54,8 +54,6 @@ builder.Services.AddSwaggerGen(opciones =>
 builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
     opciones.UseSqlServer(builder.Configuration.GetConnectionString(name: "DefaultConnection")));
 
-builder.Services.AddAutoMapper(typeof(Program));
-
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRubroService, RubroService>();
 builder.Services.AddScoped<ISaldoService, SaldoService>();

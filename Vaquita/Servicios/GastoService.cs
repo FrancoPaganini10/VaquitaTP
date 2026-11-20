@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Vaquita.DTOs;
 using Vaquita.Entidades;
@@ -10,12 +9,10 @@ namespace Vaquita.Servicios
     public class GastoService : IGastoService
     {
         private readonly ApplicationDbContext context;
-        private readonly IMapper mapper;
 
-        public GastoService(ApplicationDbContext context, IMapper mapper)
+        public GastoService(ApplicationDbContext context)
         {
             this.context = context;
-            this.mapper = mapper;
         }
 
         // Todos los gastos del grupo: usuario, detalle e importe
@@ -78,11 +75,16 @@ namespace Vaquita.Servicios
                 }
             }
 
-            var gasto = mapper.Map<Gasto>(gastoCreacion);
-            gasto.GrupoId = grupoId;
-            gasto.PagadorId = pagadorId;
-            gasto.RegistradoPorId = usuarioId;
-            gasto.Fecha = Reloj.Hoy();
+            var gasto = new Gasto
+            {
+                Importe = gastoCreacion.Importe,
+                Descripcion = gastoCreacion.Descripcion,
+                RubroId = gastoCreacion.RubroId,
+                GrupoId = grupoId,
+                PagadorId = pagadorId,
+                RegistradoPorId = usuarioId,
+                Fecha = Reloj.Hoy()
+            };
 
             context.Add(gasto);
             await context.SaveChangesAsync();

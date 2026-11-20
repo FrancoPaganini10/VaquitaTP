@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vaquita.DTOs;
 using Vaquita.Servicios;
+using Vaquita.Utilidades;
 
 namespace Vaquita.Controllers
 {
@@ -45,5 +47,13 @@ namespace Vaquita.Controllers
         [HttpPost("verificar")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Verificar(VerificarTokenDTO verificar) =>
             await servicio.Verificar(verificar.Token);
+
+        /// <summary>
+        /// Datos del usuario logueado (id, apodo, nombre, apellido y email).
+        /// </summary>
+        [HttpGet("yo")]
+        [Authorize]
+        public async Task<ActionResult<UsuarioDTO>> ObtenerYo() =>
+            await servicio.ObtenerYo(User.ObtenerUsuarioId());
     }
 }
