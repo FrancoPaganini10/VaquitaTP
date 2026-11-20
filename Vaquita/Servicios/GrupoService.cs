@@ -174,6 +174,35 @@ namespace Vaquita.Servicios
 
     await context.SaveChangesAsync();
 }
+public async Task<GrupoPublicoDTO> ObtenerPublico(string? codigo, string? tokenInvitacion)
+{
+    string? descripcion = null;
+
+    if (!string.IsNullOrWhiteSpace(tokenInvitacion))
+    {
+        var hash = TokenHash.Hashear(tokenInvitacion);
+
+        descripcion = await context.Invitaciones
+            .Where(i => i.TokenHash == hash
+                && i.Estado == EstadoInvitacion.Pendiente
+                && i.FechaVencimiento > DateTime.UtcNow
+                && i.Grupo.Activo)
+            .Select(i => i.Grupo.Descripcion)
+            .FirstOrDefaultAsync();
+    }
+    else if (!string.IsNullOrWhiteSpace(codigo))
+    {
+        descripcion = await context.Grupos
+            .Where(g => g.CodigoInvitacion == codigo && g.Activo)
+            .Select(g => g.Descripcion)
+            .FirstOrDefaultAsync();
+    }
+
+    if (descripcion is null)
+        throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
+
+    return new GrupoPublicoDTO(descripcion);
+}
 
 
         // Invitación por mail (solo el administrador del grupo)

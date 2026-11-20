@@ -65,7 +65,13 @@ return CreatedAtAction(nameof(GetPorId), new { id = grupo.Id }, grupo);        }
             await servicio.Unirse(User.ObtenerUsuarioId(), dto.Codigo, dto.TokenInvitacion);
             return Ok();
         }
-
+/// <summary>
+/// Datos públicos del grupo (solo el nombre) para mostrar "¿Querés unirte a X?" antes de entrar.
+/// </summary>
+[HttpGet("publico")]
+public async Task<ActionResult<GrupoPublicoDTO>> GetPublico(
+    [FromQuery] string? codigo, [FromQuery] string? token) =>
+    await servicio.ObtenerPublico(codigo, token);
         /// <summary>
         /// Invita a un nuevo integrante por mail (solo el administrador).
         /// </summary>
