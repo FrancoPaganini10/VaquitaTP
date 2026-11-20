@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Net;
-using System.Net.Mail;
+using MailKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -137,33 +140,40 @@ if (existente is not null)
         }
 
         public async Task EnviarCorreo(string destino, string asunto, string cuerpoHtml)
-        {
-            var host = configuration["Smtp:Host"];
+{
+    var host = configuration["Smtp:Host"];
 
-            if (string.IsNullOrWhiteSpace(host))
-            {
-                logger.LogInformation("[EMAIL SIMULADO] Para: {Destino} | Asunto: {Asunto} | Cuerpo: {Cuerpo}",
-                    destino, asunto, cuerpoHtml);
-                return;
-            }
+    if (string.IsNullOrWhiteSpace(host))
+    {
+        logger.LogInformation("[EMAIL SIMULADO] Para: {Destino} | Asunto: {Asunto} | Cuerpo: {Cuerpo}",
+            destino, asunto, cuerpoHtml);
+        return;
+    }
 
-            var puerto = configuration.GetValue("Smtp:Port", 587);
-            var desde = configuration["Smtp:Desde"]!;
+    var puerto = configuration.GetValue("Smtp:Port", 587);
+    var usuarioSmtp = configuration["Smtp:Usuario"];
+    var passwordSmtp = configuration["Smtp:Password"];
 
-            using var cliente = new SmtpClient(host, puerto)
-            {
-                EnableSsl = true,
-                Credentials = new NetworkCredential(
-                    configuration["Smtp:Usuario"], configuration["Smtp:Password"])
-            };
+    if (string.IsNullOrWhiteSpace(usuarioSmtp) || string.IsNullOrWhiteSpace(passwordSmtp))
+    {
+        throw new InvalidOperationException(
+            "La configuración SMTP requiere Smtp:Usuario y Smtp:Password.");
+    }
 
-            using var mensaje = new MailMessage(desde, destino, asunto, cuerpoHtml)
-            {
-                IsBodyHtml = true
-            };
+    var mensaje = new MimeMessage();
+    mensaje.From.Add(MailboxAddress.Parse(configuration["Smtp:Desde"]!));
+    mensaje.To.Add(MailboxAddress.Parse(destino));
+    mensaje.Subject = asunto;
+    mensaje.Body = new BodyBuilder { HtmlBody = cuerpoHtml }.ToMessageBody();
 
-            await cliente.SendMailAsync(mensaje);
-        }
+    using var cliente = new MailKit.Net.Smtp.SmtpClient();
+    var seguridad = puerto == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+
+    await cliente.ConnectAsync(host, puerto, seguridad);
+    await cliente.AuthenticateAsync(usuarioSmtp, passwordSmtp);
+    await cliente.SendAsync(mensaje);
+    await cliente.DisconnectAsync(true);
+}
 
        private async Task EnviarLink(Usuario usuario, TipoToken tipo)
 {    // Limpiar los tokens que ya vencieron
@@ -194,7 +204,15 @@ if (existente is not null)
                  $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
                  "<p>El enlace vence en 24 horas.</p>";
 
+    try
+{
     await EnviarCorreo(usuario.Email, asunto, cuerpo);
+}
+catch (Exception ex)
+{
+    // El usuario y el token ya están guardados; puede pedir otro enlace con "acceso"
+    logger.LogError(ex, "No se pudo enviar el mail a {Email}", usuario.Email);
+}
 }
     }
 }
