@@ -82,10 +82,6 @@ namespace Vaquita.Servicios
         {
             await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId);
 
-            await context.Integrantes
-                .Where(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId)
-                .ExecuteUpdateAsync(s => s.SetProperty(i => i.UltimoAcceso, DateTime.UtcNow));
-
             return await context.Grupos
                 .Where(g => g.Id == grupoId)
                 .Select(g => new GrupoDTO
@@ -109,6 +105,15 @@ namespace Vaquita.Servicios
                         }).ToList()
                 })
                 .FirstAsync();
+        }
+
+        public async Task MarcarComoActual(int grupoId, int usuarioId)
+        {
+           await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId);
+
+           await context.Integrantes
+           .Where(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId)
+           .ExecuteUpdateAsync(s => s.SetProperty(i => i.UltimoAcceso, DateTime.UtcNow));
         }
 
         // Punto de entrada común del QR y del link del mail de invitación

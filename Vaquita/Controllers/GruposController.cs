@@ -83,6 +83,17 @@ public async Task<ActionResult<GrupoPublicoDTO>> GetPublico(
         }
 
         /// <summary>
+        /// Marca el grupo como el actual del usuario (el que se abre primero la próxima vez).
+        /// </summary>
+        /// <param name="id">Id del grupo seleccionado.</param>
+        [HttpPost("{id:int}/seleccionar")]
+        public async Task<ActionResult> Seleccionar(int id)
+        {
+        await servicio.MarcarComoActual(id, User.ObtenerUsuarioId());
+        return NoContent();
+        }
+
+        /// <summary>
         /// Genera el código QR (imagen PNG) para que otros usuarios se unan al grupo.
         /// </summary>
         [HttpGet("{id:int}/qr")]

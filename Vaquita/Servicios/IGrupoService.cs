@@ -8,6 +8,7 @@ namespace Vaquita.Servicios
         Task<List<GrupoListadoDTO>> ObtenerActivos(int usuarioId);
         Task<GrupoDTO?> ObtenerUltimo(int usuarioId);
         Task<GrupoDTO> ObtenerPorId(int grupoId, int usuarioId);
+        Task MarcarComoActual(int grupoId, int usuarioId);
         Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion);
         Task<GrupoPublicoDTO> ObtenerPublico(string? codigo, string? tokenInvitacion);
         Task Invitar(int grupoId, int usuarioId, InvitacionCreacionDTO invitacionCreacion);
