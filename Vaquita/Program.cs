@@ -61,16 +61,23 @@ builder.Services.AddScoped<IGrupoService, GrupoService>();
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IPagoService, PagoService>();
 
-var origenesPermitidos = builder.Configuration.GetSection("Cors:Origenes").Get<string[]>()
-    ?? new[] { "https://localhost:4200" };
+var origenesPermitidos = builder.Configuration
+    .GetSection("Cors:Origenes")
+    .Get<string[]>()
+    ?? new[]
+    {
+        "http://localhost:5173",
+        "https://vaquita-tp.vercel.app"
+    };
 
 builder.Services.AddCors(opciones =>
 {
     opciones.AddDefaultPolicy(politica =>
     {
-        politica.WithOrigins(origenesPermitidos)
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+        politica
+            .WithOrigins(origenesPermitidos)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
