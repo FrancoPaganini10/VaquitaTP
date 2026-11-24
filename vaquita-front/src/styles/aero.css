@@ -286,6 +286,8 @@ input::placeholder { color: #7f98a7; }
   .panel form > .btn { display: block; width: 100%; }
   .acciones { flex-wrap: wrap; }
 }
+.auth-card .btn + .btn { margin-top: 10px; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation: none !important; }
 }

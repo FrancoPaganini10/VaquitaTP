@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usuariosApi } from "../api/endpoints.js";
-import AvisoDev from "../components/AvisoDev.jsx";
+import EnlaceEnviado from "../components/EnlaceEnviado.jsx";
 import Field from "../components/Field.jsx";
 import { FormError } from "../components/Estado.jsx";
 import { useForm } from "../hooks/useForm.js";
@@ -20,15 +20,7 @@ export default function Registro() {
   });
 
   if (enviadoA) {
-    return (
-      <AuthShell titulo="¡Cuenta creada!">
-        <p>
-          Te mandamos un enlace a <strong>{enviadoA}</strong>. Al abrirlo desde este dispositivo ingresás a Vaquita y
-          te queda la sesión iniciada.
-        </p>
-        <AvisoDev />
-      </AuthShell>
-    );
+    return <EnlaceEnviado email={enviadoA} onOtroEmail={() => setEnviadoA("")} />;
   }
 
   return (

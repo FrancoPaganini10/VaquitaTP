@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usuariosApi } from "../api/endpoints.js";
-import AvisoDev from "../components/AvisoDev.jsx";
+import EnlaceEnviado from "../components/EnlaceEnviado.jsx";
 import Field from "../components/Field.jsx";
 import { FormError } from "../components/Estado.jsx";
 import { useForm } from "../hooks/useForm.js";
@@ -20,18 +20,7 @@ export default function Login() {
   });
 
   if (enviadoA) {
-    return (
-      <AuthShell titulo="Revisá tu correo">
-        <p>
-          Si <strong>{enviadoA}</strong> está registrado, te mandamos un enlace para ingresar. Abrilo desde este
-          dispositivo y vas a quedar con la sesión iniciada.
-        </p>
-        <AvisoDev />
-        <button type="button" className="btn btn-ghost" onClick={() => setEnviadoA("")}>
-          Usar otro email
-        </button>
-      </AuthShell>
-    );
+    return <EnlaceEnviado email={enviadoA} onOtroEmail={() => setEnviadoA("")} />;
   }
 
   return (

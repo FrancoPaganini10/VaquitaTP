@@ -41,9 +41,12 @@ export default function Layout() {
           <select
             value={grupoActualId}
             onChange={(e) => {
-              if (e.target.value) {
-                navigate(`/grupos/${e.target.value}/gastos`);
+              const id = e.target.value;
+              if (id) {
+                navigate(`/grupos/${id}/gastos`);
                 setMenuAbierto(false);
+                // Registra el grupo como "último usado". Si falla no bloqueamos la navegación.
+                gruposApi.seleccionar(id).catch(() => {});
               }
             }}
           >
