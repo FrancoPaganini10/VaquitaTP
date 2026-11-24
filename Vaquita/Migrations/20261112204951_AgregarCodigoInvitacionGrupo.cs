@@ -18,8 +18,8 @@ namespace Vaquita.Migrations
                 nullable: false,
                 defaultValue: "");
 
-             migrationBuilder.Sql(
-        "UPDATE Grupos SET CodigoInvitacion = LOWER(CONVERT(varchar(32), CRYPT_GEN_RANDOM(16), 2))");
+            migrationBuilder.Sql(
+       "UPDATE Grupos SET CodigoInvitacion = LOWER(CONVERT(varchar(32), CRYPT_GEN_RANDOM(16), 2))");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Grupos_CodigoInvitacion",

@@ -24,11 +24,12 @@ namespace Vaquita.Servicios
             var integrantes = await context.Integrantes
                 .Where(i => i.GrupoId == grupoId)
                 .OrderBy(i => i.FechaIngreso).ThenBy(i => i.UsuarioId)
-                .Select(i => new {
+                .Select(i => new
+                {
                     i.UsuarioId,
                     i.Usuario.Apodo,
                     NombreMostrar = i.Usuario.Apodo + " (" + i.Usuario.Nombre + " " + i.Usuario.Apellido + ")"
-                    })
+                })
                 .ToListAsync();
 
             var gastosPorUsuario = await context.Gastos

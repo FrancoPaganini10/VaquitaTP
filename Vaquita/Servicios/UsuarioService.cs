@@ -35,15 +35,15 @@ namespace Vaquita.Servicios
         {
             var email = usuarioCreacion.Email.Trim().ToLowerInvariant();
 
-          
-var existente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
 
-if (existente is not null)
-{
-    // No revelamos que el mail ya está registrado: se manda un link de acceso
-    await EnviarLink(existente, TipoToken.Login);
-    return;
-}
+            var existente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (existente is not null)
+            {
+                // No revelamos que el mail ya está registrado: se manda un link de acceso
+                await EnviarLink(existente, TipoToken.Login);
+                return;
+            }
 
             var usuario = new Usuario
             {
@@ -92,26 +92,26 @@ if (existente is not null)
         }
 
         // Al presionar el link del mail: valida el token y devuelve el JWT
-       public async Task<RespuestaAutenticacionDTO> Verificar(string token)
-{
-    var hash = TokenHash.Hashear(token);
+        public async Task<RespuestaAutenticacionDTO> Verificar(string token)
+        {
+            var hash = TokenHash.Hashear(token);
 
-    var tokenVerificacion = await context.TokensVerificacion
-        .Include(t => t.Usuario)
-        .FirstOrDefaultAsync(t => t.TokenHash == hash && !t.Usado
-            && t.FechaVencimiento > DateTime.UtcNow);
+            var tokenVerificacion = await context.TokensVerificacion
+                .Include(t => t.Usuario)
+                .FirstOrDefaultAsync(t => t.TokenHash == hash && !t.Usado
+                    && t.FechaVencimiento > DateTime.UtcNow);
 
-    if (tokenVerificacion is null)
-    {
-        throw new ReglaDeNegocioException("El enlace no es válido o ya venció.");
-    }
+            if (tokenVerificacion is null)
+            {
+                throw new ReglaDeNegocioException("El enlace no es válido o ya venció.");
+            }
 
-    tokenVerificacion.Usado = true;
-    tokenVerificacion.Usuario.EmailVerificado = true;
-    await context.SaveChangesAsync();
+            tokenVerificacion.Usado = true;
+            tokenVerificacion.Usuario.EmailVerificado = true;
+            await context.SaveChangesAsync();
 
-    return ConstruirToken(tokenVerificacion.Usuario);
-}
+            return ConstruirToken(tokenVerificacion.Usuario);
+        }
 
         public RespuestaAutenticacionDTO ConstruirToken(Usuario usuario)
         {
@@ -140,79 +140,79 @@ if (existente is not null)
         }
 
         public async Task EnviarCorreo(string destino, string asunto, string cuerpoHtml)
-{
-    var host = configuration["Smtp:Host"];
+        {
+            var host = configuration["Smtp:Host"];
 
-    if (string.IsNullOrWhiteSpace(host))
-    {
-        logger.LogInformation("[EMAIL SIMULADO] Para: {Destino} | Asunto: {Asunto} | Cuerpo: {Cuerpo}",
-            destino, asunto, cuerpoHtml);
-        return;
-    }
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                logger.LogInformation("[EMAIL SIMULADO] Para: {Destino} | Asunto: {Asunto} | Cuerpo: {Cuerpo}",
+                    destino, asunto, cuerpoHtml);
+                return;
+            }
 
-    var puerto = configuration.GetValue("Smtp:Port", 587);
-    var usuarioSmtp = configuration["Smtp:Usuario"];
-    var passwordSmtp = configuration["Smtp:Password"];
+            var puerto = configuration.GetValue("Smtp:Port", 587);
+            var usuarioSmtp = configuration["Smtp:Usuario"];
+            var passwordSmtp = configuration["Smtp:Password"];
 
-    if (string.IsNullOrWhiteSpace(usuarioSmtp) || string.IsNullOrWhiteSpace(passwordSmtp))
-    {
-        throw new InvalidOperationException(
-            "La configuración SMTP requiere Smtp:Usuario y Smtp:Password.");
-    }
+            if (string.IsNullOrWhiteSpace(usuarioSmtp) || string.IsNullOrWhiteSpace(passwordSmtp))
+            {
+                throw new InvalidOperationException(
+                    "La configuración SMTP requiere Smtp:Usuario y Smtp:Password.");
+            }
 
-    var mensaje = new MimeMessage();
-    mensaje.From.Add(MailboxAddress.Parse(configuration["Smtp:Desde"]!));
-    mensaje.To.Add(MailboxAddress.Parse(destino));
-    mensaje.Subject = asunto;
-    mensaje.Body = new BodyBuilder { HtmlBody = cuerpoHtml }.ToMessageBody();
+            var mensaje = new MimeMessage();
+            mensaje.From.Add(MailboxAddress.Parse(configuration["Smtp:Desde"]!));
+            mensaje.To.Add(MailboxAddress.Parse(destino));
+            mensaje.Subject = asunto;
+            mensaje.Body = new BodyBuilder { HtmlBody = cuerpoHtml }.ToMessageBody();
 
-    using var cliente = new MailKit.Net.Smtp.SmtpClient();
-    var seguridad = puerto == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            using var cliente = new MailKit.Net.Smtp.SmtpClient();
+            var seguridad = puerto == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
 
-    await cliente.ConnectAsync(host, puerto, seguridad);
-    await cliente.AuthenticateAsync(usuarioSmtp, passwordSmtp);
-    await cliente.SendAsync(mensaje);
-    await cliente.DisconnectAsync(true);
-}
+            await cliente.ConnectAsync(host, puerto, seguridad);
+            await cliente.AuthenticateAsync(usuarioSmtp, passwordSmtp);
+            await cliente.SendAsync(mensaje);
+            await cliente.DisconnectAsync(true);
+        }
 
-       private async Task EnviarLink(Usuario usuario, TipoToken tipo)
-{    // Limpiar los tokens que ya vencieron
-    await context.TokensVerificacion
-        .Where(t => t.FechaVencimiento <= DateTime.UtcNow)
-        .ExecuteDeleteAsync();
-    // El token original se envía por correo; en la base se guarda únicamente su hash.
-    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        private async Task EnviarLink(Usuario usuario, TipoToken tipo)
+        {    // Limpiar los tokens que ya vencieron
+            await context.TokensVerificacion
+                .Where(t => t.FechaVencimiento <= DateTime.UtcNow)
+                .ExecuteDeleteAsync();
+            // El token original se envía por correo; en la base se guarda únicamente su hash.
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-    var tokenVerificacion = new TokenVerificacion
-    {
-        UsuarioId = usuario.Id,
-        Tipo = tipo,
-        TokenHash = TokenHash.Hashear(token),
-        FechaVencimiento = DateTime.UtcNow.AddHours(24)
-    };
+            var tokenVerificacion = new TokenVerificacion
+            {
+                UsuarioId = usuario.Id,
+                Tipo = tipo,
+                TokenHash = TokenHash.Hashear(token),
+                FechaVencimiento = DateTime.UtcNow.AddHours(24)
+            };
 
-    context.Add(tokenVerificacion);
-    await context.SaveChangesAsync();
+            context.Add(tokenVerificacion);
+            await context.SaveChangesAsync();
 
-    var link = $"{configuration["FrontendUrl"]}/verificar?token={token}";
+            var link = $"{configuration["FrontendUrl"]}/verificar?token={token}";
 
-    var asunto = tipo == TipoToken.Alta
-        ? "Confirmá tu cuenta en Vaquita"
-        : "Tu enlace de acceso a Vaquita";
+            var asunto = tipo == TipoToken.Alta
+                ? "Confirmá tu cuenta en Vaquita"
+                : "Tu enlace de acceso a Vaquita";
 
-    var cuerpo = $"<p>Hola {WebUtility.HtmlEncode(usuario.Apodo)},</p>" +
-                 $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
-                 "<p>El enlace vence en 24 horas.</p>";
+            var cuerpo = $"<p>Hola {WebUtility.HtmlEncode(usuario.Apodo)},</p>" +
+                         $"<p>Ingresá a Vaquita con este enlace: <a href=\"{link}\">{link}</a></p>" +
+                         "<p>El enlace vence en 24 horas.</p>";
 
-    try
-{
-    await EnviarCorreo(usuario.Email, asunto, cuerpo);
-}
-catch (Exception ex)
-{
-    // El usuario y el token ya están guardados; puede pedir otro enlace con "acceso"
-    logger.LogError(ex, "No se pudo enviar el mail a {Email}", usuario.Email);
-}
-}
+            try
+            {
+                await EnviarCorreo(usuario.Email, asunto, cuerpo);
+            }
+            catch (Exception ex)
+            {
+                // El usuario y el token ya están guardados; puede pedir otro enlace con "acceso"
+                logger.LogError(ex, "No se pudo enviar el mail a {Email}", usuario.Email);
+            }
+        }
     }
 }

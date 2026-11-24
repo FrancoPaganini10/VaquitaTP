@@ -33,7 +33,7 @@ namespace Vaquita.Servicios
             grupo.AdministradorId = usuarioId;
             grupo.Activo = true;
             grupo.FechaCreacion = ahora;
-            grupo.CodigoInvitacion = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();  
+            grupo.CodigoInvitacion = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
 
             grupo.Integrantes.Add(new Integrante
             {
@@ -109,161 +109,161 @@ namespace Vaquita.Servicios
 
         public async Task MarcarComoActual(int grupoId, int usuarioId)
         {
-           await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId);
+            await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId);
 
-           await context.Integrantes
-           .Where(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId)
-           .ExecuteUpdateAsync(s => s.SetProperty(i => i.UltimoAcceso, DateTime.UtcNow));
+            await context.Integrantes
+            .Where(i => i.GrupoId == grupoId && i.UsuarioId == usuarioId)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.UltimoAcceso, DateTime.UtcNow));
         }
 
         // Punto de entrada común del QR y del link del mail de invitación
-       public async Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion)
-{
-    Grupo? grupo;
-    Invitacion? invitacion = null;
-
-    if (!string.IsNullOrWhiteSpace(tokenInvitacion))
-    {
-        // Camino invitación por mail
-        var hashInvitacion = TokenHash.Hashear(tokenInvitacion);
-
-        invitacion = await context.Invitaciones
-            .Include(i => i.Grupo)
-            .FirstOrDefaultAsync(i => i.TokenHash == hashInvitacion
-                && i.Estado == EstadoInvitacion.Pendiente
-                && i.FechaVencimiento > DateTime.UtcNow);
-
-        if (invitacion is null)
-            throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
-
-        var emailUsuario = await context.Usuarios
-            .Where(u => u.Id == usuarioId)
-            .Select(u => u.Email)
-            .FirstAsync();
-
-        if (!string.Equals(invitacion.Email, emailUsuario, StringComparison.OrdinalIgnoreCase))
-            throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
-
-        grupo = invitacion.Grupo;
-    }
-    else if (!string.IsNullOrWhiteSpace(codigo))
-    {
-        // Camino QR
-        grupo = await context.Grupos.FirstOrDefaultAsync(g => g.CodigoInvitacion == codigo);
-    }
-    else
-    {
-        throw new ReglaDeNegocioException("El código no es válido.");
-    }
-
-    if (grupo is null || !grupo.Activo)
-        throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
-
-    if (invitacion is not null)
-        invitacion.Estado = EstadoInvitacion.Aceptada;
-
-    var yaEsIntegrante = await context.Integrantes
-        .AnyAsync(i => i.GrupoId == grupo.Id && i.UsuarioId == usuarioId);
-
-    if (!yaEsIntegrante)
-    {
-        var ahora = DateTime.UtcNow;
-        context.Add(new Integrante
+        public async Task Unirse(int usuarioId, string? codigo, string? tokenInvitacion)
         {
-            GrupoId = grupo.Id,
-            UsuarioId = usuarioId,
-            FechaIngreso = ahora,
-            UltimoAcceso = ahora
-        });
-    }
+            Grupo? grupo;
+            Invitacion? invitacion = null;
 
-    await context.SaveChangesAsync();
-}
-public async Task<GrupoPublicoDTO> ObtenerPublico(string? codigo, string? tokenInvitacion)
-{
-    string? descripcion = null;
+            if (!string.IsNullOrWhiteSpace(tokenInvitacion))
+            {
+                // Camino invitación por mail
+                var hashInvitacion = TokenHash.Hashear(tokenInvitacion);
 
-    if (!string.IsNullOrWhiteSpace(tokenInvitacion))
-    {
-        var hash = TokenHash.Hashear(tokenInvitacion);
+                invitacion = await context.Invitaciones
+                    .Include(i => i.Grupo)
+                    .FirstOrDefaultAsync(i => i.TokenHash == hashInvitacion
+                        && i.Estado == EstadoInvitacion.Pendiente
+                        && i.FechaVencimiento > DateTime.UtcNow);
 
-        descripcion = await context.Invitaciones
-            .Where(i => i.TokenHash == hash
-                && i.Estado == EstadoInvitacion.Pendiente
-                && i.FechaVencimiento > DateTime.UtcNow
-                && i.Grupo.Activo)
-            .Select(i => i.Grupo.Descripcion)
-            .FirstOrDefaultAsync();
-    }
-    else if (!string.IsNullOrWhiteSpace(codigo))
-    {
-        descripcion = await context.Grupos
-            .Where(g => g.CodigoInvitacion == codigo && g.Activo)
-            .Select(g => g.Descripcion)
-            .FirstOrDefaultAsync();
-    }
+                if (invitacion is null)
+                    throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
 
-    if (descripcion is null)
-        throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
+                var emailUsuario = await context.Usuarios
+                    .Where(u => u.Id == usuarioId)
+                    .Select(u => u.Email)
+                    .FirstAsync();
 
-    return new GrupoPublicoDTO(descripcion);
-}
+                if (!string.Equals(invitacion.Email, emailUsuario, StringComparison.OrdinalIgnoreCase))
+                    throw new ReglaDeNegocioException("La invitación no es válida o ya venció.");
+
+                grupo = invitacion.Grupo;
+            }
+            else if (!string.IsNullOrWhiteSpace(codigo))
+            {
+                // Camino QR
+                grupo = await context.Grupos.FirstOrDefaultAsync(g => g.CodigoInvitacion == codigo);
+            }
+            else
+            {
+                throw new ReglaDeNegocioException("El código no es válido.");
+            }
+
+            if (grupo is null || !grupo.Activo)
+                throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
+
+            if (invitacion is not null)
+                invitacion.Estado = EstadoInvitacion.Aceptada;
+
+            var yaEsIntegrante = await context.Integrantes
+                .AnyAsync(i => i.GrupoId == grupo.Id && i.UsuarioId == usuarioId);
+
+            if (!yaEsIntegrante)
+            {
+                var ahora = DateTime.UtcNow;
+                context.Add(new Integrante
+                {
+                    GrupoId = grupo.Id,
+                    UsuarioId = usuarioId,
+                    FechaIngreso = ahora,
+                    UltimoAcceso = ahora
+                });
+            }
+
+            await context.SaveChangesAsync();
+        }
+        public async Task<GrupoPublicoDTO> ObtenerPublico(string? codigo, string? tokenInvitacion)
+        {
+            string? descripcion = null;
+
+            if (!string.IsNullOrWhiteSpace(tokenInvitacion))
+            {
+                var hash = TokenHash.Hashear(tokenInvitacion);
+
+                descripcion = await context.Invitaciones
+                    .Where(i => i.TokenHash == hash
+                        && i.Estado == EstadoInvitacion.Pendiente
+                        && i.FechaVencimiento > DateTime.UtcNow
+                        && i.Grupo.Activo)
+                    .Select(i => i.Grupo.Descripcion)
+                    .FirstOrDefaultAsync();
+            }
+            else if (!string.IsNullOrWhiteSpace(codigo))
+            {
+                descripcion = await context.Grupos
+                    .Where(g => g.CodigoInvitacion == codigo && g.Activo)
+                    .Select(g => g.Descripcion)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (descripcion is null)
+                throw new ReglaDeNegocioException("El código no es válido o el grupo está cerrado.");
+
+            return new GrupoPublicoDTO(descripcion);
+        }
 
 
         // Invitación por mail (solo el administrador del grupo)
         public async Task Invitar(int grupoId, int usuarioId, InvitacionCreacionDTO invitacionCreacion)
-{
-    var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+        {
+            var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
 
-    if (grupo.AdministradorId != usuarioId)
-    {
-        throw new AccesoDenegadoException("Solo el administrador puede invitar integrantes.");
-    }
+            if (grupo.AdministradorId != usuarioId)
+            {
+                throw new AccesoDenegadoException("Solo el administrador puede invitar integrantes.");
+            }
 
-    var email = invitacionCreacion.Email.Trim().ToLowerInvariant();
+            var email = invitacionCreacion.Email.Trim().ToLowerInvariant();
 
-    var yaEsIntegrante = await context.Integrantes
-        .AnyAsync(i => i.GrupoId == grupoId && i.Usuario.Email == email);
+            var yaEsIntegrante = await context.Integrantes
+                .AnyAsync(i => i.GrupoId == grupoId && i.Usuario.Email == email);
 
-    if (yaEsIntegrante)
-    {
-        throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
-    }
-        // Marcar como vencidas las invitaciones pendientes cuyo plazo ya pasó
-    await context.Invitaciones
-        .Where(i => i.Estado == EstadoInvitacion.Pendiente && i.FechaVencimiento <= DateTime.UtcNow)
-        .ExecuteUpdateAsync(s => s.SetProperty(i => i.Estado, EstadoInvitacion.Vencida));
+            if (yaEsIntegrante)
+            {
+                throw new ReglaDeNegocioException("Esa persona ya es integrante del grupo.");
+            }
+            // Marcar como vencidas las invitaciones pendientes cuyo plazo ya pasó
+            await context.Invitaciones
+                .Where(i => i.Estado == EstadoInvitacion.Pendiente && i.FechaVencimiento <= DateTime.UtcNow)
+                .ExecuteUpdateAsync(s => s.SetProperty(i => i.Estado, EstadoInvitacion.Vencida));
 
-    // El token original se envía por correo; en la base se guarda únicamente su hash.
-    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            // El token original se envía por correo; en la base se guarda únicamente su hash.
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-    var invitacion = new Invitacion
-    {
-        GrupoId = grupoId,
-        InvitadoPorId = usuarioId,
-        Email = email,
-        TokenHash = TokenHash.Hashear(token),
-        Estado = EstadoInvitacion.Pendiente,
-        FechaEnvio = DateTime.UtcNow,
-        FechaVencimiento = DateTime.UtcNow.AddDays(7)
-    };
+            var invitacion = new Invitacion
+            {
+                GrupoId = grupoId,
+                InvitadoPorId = usuarioId,
+                Email = email,
+                TokenHash = TokenHash.Hashear(token),
+                Estado = EstadoInvitacion.Pendiente,
+                FechaEnvio = DateTime.UtcNow,
+                FechaVencimiento = DateTime.UtcNow.AddDays(7)
+            };
 
-    context.Add(invitacion);
-    await context.SaveChangesAsync();
+            context.Add(invitacion);
+            await context.SaveChangesAsync();
 
-    var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={token}";
+            var link = $"{configuration["FrontendUrl"]}/unirse/{grupoId}?token={token}";
 
-    var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +
-                 $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
-                 "<p>Tenés que estar registrado en la app para unirte.</p>";
+            var cuerpo = $"<p>Te invitaron a unirte al grupo <b>{WebUtility.HtmlEncode(grupo.Descripcion)}</b> en Vaquita.</p>" +
+                         $"<p>Aceptá la invitación acá: <a href=\"{link}\">{link}</a></p>" +
+                         "<p>Tenés que estar registrado en la app para unirte.</p>";
 
-    await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
-}
+            await usuarioService.EnviarCorreo(email, $"Invitación al grupo {grupo.Descripcion}", cuerpo);
+        }
 
         // QR con la URL que redirige al "punto de unión" de la app
         private byte[] GenerarQr(string codigo)
         {
-             var url = $"{configuration["FrontendUrl"]}/unirse?codigo={codigo}";
+            var url = $"{configuration["FrontendUrl"]}/unirse?codigo={codigo}";
 
             using var generador = new QRCodeGenerator();
             using var datos = generador.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
@@ -278,31 +278,31 @@ public async Task<GrupoPublicoDTO> ObtenerPublico(string? codigo, string? tokenI
         }
 
         // Cerrar grupo: todos los saldos deben estar en cero
-public async Task Cerrar(int grupoId, int usuarioId)
-{
-    var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
+        public async Task Cerrar(int grupoId, int usuarioId)
+        {
+            var grupo = await context.ObtenerGrupoComoIntegrante(grupoId, usuarioId, soloAbierto: true);
 
-    if (grupo.AdministradorId != usuarioId)
-    {
-        throw new AccesoDenegadoException("Solo el administrador puede cerrar el grupo.");
-    }
+            if (grupo.AdministradorId != usuarioId)
+            {
+                throw new AccesoDenegadoException("Solo el administrador puede cerrar el grupo.");
+            }
 
-    await using var transaccion = await context.Database.BeginTransactionAsync();           // <-- nueva
-    await context.Database.ExecuteSqlInterpolatedAsync(                                      // <-- nueva
-        $"SELECT Id FROM dbo.Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
+            await using var transaccion = await context.Database.BeginTransactionAsync();           // <-- nueva
+            await context.Database.ExecuteSqlInterpolatedAsync(                                      // <-- nueva
+                $"SELECT Id FROM dbo.Grupos WITH (UPDLOCK, ROWLOCK) WHERE Id = {grupoId}");
 
-    var resumen = await saldoService.Calcular(grupoId);
+            var resumen = await saldoService.Calcular(grupoId);
 
-    if (!resumen.Saldado)
-    {
-        throw new ReglaDeNegocioException(
-            "Para cerrar el grupo todos los saldos deben estar en cero.");
-    }
+            if (!resumen.Saldado)
+            {
+                throw new ReglaDeNegocioException(
+                    "Para cerrar el grupo todos los saldos deben estar en cero.");
+            }
 
-    grupo.Activo = false;
-    grupo.FechaCierre = DateTime.UtcNow;
-    await context.SaveChangesAsync();
-    await transaccion.CommitAsync();                                                         // <-- nueva
-}
+            grupo.Activo = false;
+            grupo.FechaCierre = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            await transaccion.CommitAsync();                                                         // <-- nueva
+        }
     }
 }
