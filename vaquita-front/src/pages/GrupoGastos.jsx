@@ -1,73 +1,88 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { gastosApi, pagosApi, saldosApi } from "../api/endpoints.js";
-import { Cargando, ErrorBanner } from "../components/Estado.jsx";
+import { gastosApi } from "../api/endpoints.js";
 import AnularModal from "../components/AnularModal.jsx";
-import PagoModal from "../components/PagoModal.jsx";
-import CerrarGrupo from "../components/saldos/CerrarGrupo.jsx";
-import GastosPorRubro from "../components/saldos/GastosPorRubro.jsx";
-import ListaDeudas from "../components/saldos/ListaDeudas.jsx";
-import PagosRegistrados from "../components/saldos/PagosRegistrados.jsx";
-import TablaSaldos from "../components/saldos/TablaSaldos.jsx";
+import { Cargando, ErrorBanner } from "../components/Estado.jsx";
+import GastoModal from "../components/GastoModal.jsx";
+import Panel from "../components/Panel.jsx";
 import { useFetch } from "../hooks/useFetch.js";
 import { fecha, moneda } from "../lib/format.js";
 
-// Vista 2: Cuadro 1 (saldos) y Cuadro 2 (quién le debe a quién) en la misma página
-export default function GrupoSaldos() {
-  const { grupo, miId, soyAdmin, recargarGrupos } = useOutletContext();
-  const { data: resumen, error, loading, reload: recargarResumen } = useFetch(
-    () => saldosApi.obtener(grupo.id),
-    [grupo.id]
-  );
-  const { data: pagos, reload: recargarPagos } = useFetch(() => pagosApi.listar(grupo.id), [grupo.id]);
-  const { data: porRubro } = useFetch(() => gastosApi.porRubro(grupo.id), [grupo.id]);
-  const [deudaAPagar, setDeudaAPagar] = useState(null);
-  const [pagoAAnular, setPagoAAnular] = useState(null);
+// Vista 1: lista de gastos del grupo + alta y anulación.
+export default function GrupoGastos() {
+  const { grupo, miId } = useOutletContext();
+  const { data: gastos, error, loading, reload } = useFetch(() => gastosApi.listar(grupo.id), [grupo.id]);
+  const [agregando, setAgregando] = useState(false);
+  const [gastoAAnular, setGastoAAnular] = useState(null);
 
-  if (loading && !resumen) return <Cargando />;
+  if (loading && !gastos) return <Cargando />;
   if (error) return <ErrorBanner error={error} />;
-
-  const alPagar = () => {
-    recargarResumen();
-    recargarPagos();
-  };
 
   return (
     <>
-      <div className="cuadros">
-        <TablaSaldos resumen={resumen} miId={miId} />
-        <ListaDeudas resumen={resumen} grupo={grupo} miId={miId} onPagar={setDeudaAPagar} />
-      </div>
+      <Panel titulo="Gastos">
+        {grupo.activo && (
+          <div className="acciones" style={{ marginTop: 0, marginBottom: "0.75rem" }}>
+            <button type="button" className="btn btn-green" onClick={() => setAgregando(true)}>
+              Agregar gasto
+            </button>
+          </div>
+        )}
 
-      <div className="cuadros">
-        <PagosRegistrados pagos={pagos} grupo={grupo} onAnular={setPagoAAnular} />
-        <GastosPorRubro porRubro={porRubro} />
-      </div>
+        {!gastos?.length ? (
+          <p className="vacio-texto">Todavía no hay gastos cargados.</p>
+        ) : (
+          <div className="tabla-wrap">
+            <table className="tabla">
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Descripción</th>
+                  <th scope="col">Pagó</th>
+                  <th scope="col">Rubro</th>
+                  <th scope="col" className="num">Importe</th>
+                  <th scope="col">
+                    <span className="sr-only">Acciones</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {gastos.map((g) => (
+                  <tr key={g.id}>
+                    <td>{fecha(g.fecha)}</td>
+                    <td>{g.descripcion}</td>
+                    <td>{g.pagador}</td>
+                    <td>{g.rubro ?? "—"}</td>
+                    <td className="num">{moneda(g.importe)}</td>
+                    <td>
+                      {grupo.activo && (
+                        <button type="button" className="btn btn-ghost btn-small" onClick={() => setGastoAAnular(g)}>
+                          Anular
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
 
-      {grupo.activo && (
-        <CerrarGrupo grupo={grupo} saldado={resumen.saldado} soyAdmin={soyAdmin} recargarGrupos={recargarGrupos} />
-      )}
-
-      <PagoModal
-        deuda={deudaAPagar}
-        saldos={resumen.saldos}
-        onClose={() => setDeudaAPagar(null)}
-        grupoId={grupo.id}
-        onGuardado={alPagar}
-      />
+      <GastoModal open={agregando} onClose={() => setAgregando(false)} grupo={grupo} miId={miId} onGuardado={reload} />
 
       <AnularModal
-        item={pagoAAnular}
-        titulo="¿Anular el pago?"
-        descripcion={(p) => (
+        item={gastoAAnular}
+        titulo="¿Anular el gasto?"
+        descripcion={(g) => (
           <>
-            Se anula el pago de <strong>{moneda(p.importe)}</strong> de <strong>{p.deudor}</strong> a{" "}
-            <strong>{p.acreedor}</strong> del {fecha(p.fecha)}. Los saldos se van a recalcular.
+            Se anula el gasto <strong>{g.descripcion}</strong> de <strong>{moneda(g.importe)}</strong> pagado por{" "}
+            <strong>{g.pagador}</strong>. Los saldos se van a recalcular.
           </>
         )}
-        onAnular={(p) => pagosApi.anular(grupo.id, p.id)}
-        onClose={() => setPagoAAnular(null)}
-        onAnulado={alPagar}
+        onAnular={(g) => gastosApi.anular(grupo.id, g.id)}
+        onClose={() => setGastoAAnular(null)}
+        onAnulado={reload}
       />
     </>
   );

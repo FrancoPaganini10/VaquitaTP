@@ -1,10 +1,25 @@
 import { fecha, moneda } from "../../lib/format.js";
 import Panel from "../Panel.jsx";
 
-// El botón se muestra a cualquier integrante con el grupo abierto; el back valida quién puede anular.
-export default function PagosRegistrados({ pagos, grupo, onAnular }) {
+// `onNuevo` es null cuando el usuario no tiene ninguna deuda en la que participe.
+// El back valida quién puede anular.
+export default function PagosRegistrados({ pagos, grupo, onAnular, onNuevo }) {
   return (
     <Panel titulo="Pagos registrados">
+      {grupo.activo && (
+        <div className="acciones" style={{ marginTop: 0, marginBottom: "0.75rem" }}>
+          <button
+            type="button"
+            className="btn btn-green btn-small"
+            disabled={!onNuevo}
+            title={onNuevo ? "" : "No hay deudas pendientes en las que participes"}
+            onClick={onNuevo}
+          >
+            Registrar pago
+          </button>
+        </div>
+      )}
+
       {!pagos?.length ? (
         <p className="vacio-texto">Todavía no se registraron pagos entre integrantes.</p>
       ) : (

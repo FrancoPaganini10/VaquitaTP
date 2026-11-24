@@ -27,6 +27,9 @@ export default function GrupoSaldos() {
   if (loading && !resumen) return <Cargando />;
   if (error) return <ErrorBanner error={error} />;
 
+  // Primera deuda pendiente en la que participo (como deudor o acreedor), para el botón "Registrar pago"
+  const miDeuda = resumen.deudas.find((d) => d.deudorId === miId || d.acreedorId === miId);
+
   const alPagar = () => {
     recargarResumen();
     recargarPagos();
@@ -43,9 +46,8 @@ export default function GrupoSaldos() {
         <PagosRegistrados
           pagos={pagos}
           grupo={grupo}
-          miId={miId}
-          soyAdmin={soyAdmin}
           onAnular={setPagoAAnular}
+          onNuevo={miDeuda ? () => setDeudaAPagar(miDeuda) : null}
         />
         <GastosPorRubro porRubro={porRubro} />
       </div>
