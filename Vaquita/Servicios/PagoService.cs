@@ -94,6 +94,7 @@ namespace Vaquita.Servicios
                 AcreedorId = pagoCreacion.AcreedorId,
                 Importe = pagoCreacion.Importe,
                 Fecha = Reloj.Hoy(),
+                CreadorId = usuarioId
             };
 
             context.Add(pago);
@@ -118,10 +119,10 @@ namespace Vaquita.Servicios
             if (pago.Anulado)
                 throw new ReglaDeNegocioException("El pago ya está anulado.");
 
-            // Solo quien participó del pago o el administrador
-            if (usuarioId != pago.DeudorId && usuarioId != pago.AcreedorId
-                && usuarioId != grupo.AdministradorId)
-                throw new AccesoDenegadoException("No podés anular este pago.");
+            // Solo quien registró el pago o el administrador
+            if (usuarioId != pago.CreadorId && usuarioId != grupo.AdministradorId)
+                throw new AccesoDenegadoException(
+                    "Solo quien registró el pago o el administrador puede anularlo.");
 
             pago.Anulado = true;
             pago.FechaAnulacion = DateTime.UtcNow;

@@ -202,6 +202,9 @@ namespace Vaquita.Migrations
                     b.Property<int?>("AnuladoPorId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CreadorId")
+                        .HasColumnType("int");
+
                     b.Property<int>("DeudorId")
                         .HasColumnType("int");
 

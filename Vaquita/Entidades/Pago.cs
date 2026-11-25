@@ -22,5 +22,6 @@ namespace Vaquita.Entidades
         public bool Anulado { get; set; }
         public DateTime? FechaAnulacion { get; set; }
         public int? AnuladoPorId { get; set; }
+        public int CreadorId { get; set; }
     }
 }
