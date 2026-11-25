@@ -35,6 +35,11 @@ export default function GrupoSaldos() {
     recargarPagos();
   };
 
+  const miApodo = grupo.integrantes.find((i) => i.usuarioId === miId)?.apodo;
+
+// Si el pago trae deudorId se usa ese; si no, se compara por apodo
+  const esMiPago = (p) => (p.deudorId !== undefined ? p.deudorId === miId : p.deudor === miApodo);
+
   return (
     <>
       <div className="cuadros">

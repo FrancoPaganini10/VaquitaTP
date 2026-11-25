@@ -11,7 +11,12 @@ function AnularContenido({ item, descripcion, onAnular, onClose, onAnulado }) {
     setAnulando(true);
     setError("");
     try {
-      await onAnular(item);
+      await onAnular={(p) => {
+  if (!soyAdmin && !esMiPago(p)) {
+    throw new Error("Solo quien registró el pago o el administrador pueden anularlo.");
+  }
+  return pagosApi.anular(grupo.id, p.id);
+}}
       onClose();
       onAnulado();
     } catch (e) {
